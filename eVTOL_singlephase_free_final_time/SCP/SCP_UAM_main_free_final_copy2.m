@@ -55,7 +55,7 @@ x = linspace(x0,xf,col_points)';
 z = linspace(z0,zf,col_points)';
 vx = linspace(vx0,vxf,col_points)';
 vz = linspace(vz0,vzf,col_points)';
-Xk=[x';z';vx';vz'];
+
 
 X = sdpvar(4,N);
 U = sdpvar(3,N);
@@ -84,15 +84,15 @@ for Index = 1:Max_iter
     for i = 1:N-1
         
         % From last step
-        x01  = Xk(1,i);
-        z01  = Xk(2,i);
-        vx01 = Xk(3,i);
-        vz01 = Xk(4,i);
+        x01  = x(i);
+        z01  = z(i);
+        vx01 = vx(i);
+        vz01 = vz(i);
 
-        x02  = Xk(1,i+1);
-        z02  = Xk(2,i+1);
-        vx02 = Xk(3,i+1);
-        vz02 = Xk(4,i+1);
+        x02  = x(i+1);
+        z02  = z(i+1);
+        vx02 = vx(i+1);
+        vz02 = vz(i+1);
         
         
         u1_01 = u1(i);
@@ -179,13 +179,13 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
 %         Cons = Cons + [ norm(U(1:2,j)) <= U(3,j) ];
     end
-     Cons = Cons + [  Sigma == 1500 ];% added time constraint
+    % Cons = Cons + [  Sigma == 1500 ];% added time constraint
     %Cons = Cons + [  Sigma == 912.2 ];
-    %Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
+    Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
-    %Xk = [x'; z'; vx'; vz']; % X_k-1
+    Xk = [x'; z'; vx'; vz']; % X_k-1
     delta = [1000*ones(1,N); 50*ones(1,N); 50*ones(1,N); 50*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
@@ -214,12 +214,11 @@ for Index = 1:Max_iter
     sol.info
     CPU_time(Index) = toc;
     
-    X_opt = value(X);
     % Check convergence condition and update
-    x_opt  = X_opt(1,:)';
-    z_opt  = X_opt(2,:)';
-    vx_opt = X_opt(3,:)';
-    vz_opt = X_opt(4,:)';
+    x_opt  = value(X(1,:))';
+    z_opt  = value(X(2,:))';
+    vx_opt = value(X(3,:))';
+    vz_opt = value(X(4,:))';
     u1_opt = value(U(1,:))';
     u2_opt = value(U(2,:))';
     u3_opt = value(U(3,:))';
@@ -230,10 +229,10 @@ for Index = 1:Max_iter
     Sigma_all(:,Index+1) = sigma_opt;
     
     del = zeros(5,1);
-    del(1) = max(abs(x_opt-Xk(1,:)'));
-    del(2) = max(abs(z_opt-Xk(2,:)'));
-    del(3) = max(abs(vx_opt-Xk(3,:)'));
-    del(4) = max(abs(vz_opt-Xk(4,:)'));
+    del(1) = max(abs(x_opt-x));
+    del(2) = max(abs(z_opt-z));
+    del(3) = max(abs(vx_opt-vx));
+    del(4) = max(abs(vz_opt-vz));
     del(5) = max(abs(sigma_opt-sigma));
     Del_state(:,Index) = del;
     
@@ -247,13 +246,14 @@ for Index = 1:Max_iter
     Conv_sigma(Index)   = del(5);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    Xk1 = Xk;
-    Xk2 = Xk1 + 0.2*(X_opt - Xk1);
-    
     if (del(1) <= 0.5) && (del(2) <= 0.8) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 2)
         break;
     else
-        Xk = Xk2; % X_k-2
+        Xk1 = [x'; z'; vx'; vz']; % X_k-2
+        x     = x_opt;
+        z     = z_opt;
+        vx    = vx_opt;
+        vz    = vz_opt;
         sigma = sigma_opt
         u1 = u1_opt;
         u2 = u2_opt;
