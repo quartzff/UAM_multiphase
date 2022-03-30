@@ -160,8 +160,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
         
         %---Objective
-        %J = J + 1/1e9*step*1/2*U(3,i+1)^2;
-         J = J + 1/1e9 * step*(1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i)-u3_01);%First order linearization
+        %J = J + 1/1e9*step*1/2*U(3,i+1)^2*Sigma;
+         J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i)-u3_01));%First order linearization
         %J = J + 1/1e9 * step * 1/2*U(3,i)^2*sigma; %Psedo-linearization
         %J = J + 1/1e9 * step * 1/2*u3_01^2*Sigma;
         %J = J + step * Sigma;
@@ -179,9 +179,9 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
 %         Cons = Cons + [ norm(U(1:2,j)) <= U(3,j) ];
     end
-     Cons = Cons + [  Sigma == 1500 ];% added time constraint
+     %Cons = Cons + [  Sigma == 1500 ];% added time constraint
     %Cons = Cons + [  Sigma == 912.2 ];
-    %Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
+    Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -248,7 +248,7 @@ for Index = 1:Max_iter
     Obj(Index)        = value(Objective); % record objective for each step
     
     Xk1 = Xk;
-    Xk2 = Xk1 + 0.2*(X_opt - Xk1);
+    Xk2 = X_opt;
     
     if (del(1) <= 0.5) && (del(2) <= 0.8) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 2)
         break;
