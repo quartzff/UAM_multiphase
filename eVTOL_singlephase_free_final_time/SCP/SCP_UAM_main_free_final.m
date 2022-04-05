@@ -10,6 +10,8 @@ clear all
 clc
 format long
 
+global m rho Sx Sz g CD step
+global cf lambda N w_eta w_s
 % Parameters
 m      = 240;           % vehicle's mass, kg
 rho    = 1.225;         % air density, kg/m^3
@@ -18,6 +20,9 @@ Sz     = 1.47;          % drag coefficient
 g      = 9.81;          % gravitaional acceleration, m/s^2
 CD     = 1;             % drag coefficient
 
+cf     = 0.5; % contraction factor (for backtracking line-search)
+lambda = 0.4; % 0 < eta < 0.5 (for Goldstein Conditions)
+w_s   = 1e-2;
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
@@ -43,7 +48,7 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 50;   % Maximum number of iteration
+Max_iter = 15;   % Maximum number of iteration
 col_points = 150;
 tau = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
@@ -55,7 +60,8 @@ x = linspace(x0,xf,col_points)';
 z = linspace(z0,zf,col_points)';
 vx = linspace(vx0,vxf,col_points)';
 vz = linspace(vz0,vzf,col_points)';
-Xk=[x';z';vx';vz'];
+
+
 
 X = sdpvar(4,N);
 U = sdpvar(3,N);
@@ -74,6 +80,8 @@ sigma = sigma_guess;
 u1 = ones(length(tau),1)*210;
 u2 = ones(length(tau),1)*2300;
 u3 = ones(length(tau),1)*2300;
+Xk=[x';z';vx';vz'];
+Uk = [u1';u2';u3'];
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -95,13 +103,13 @@ for Index = 1:Max_iter
         vz02 = Xk(4,i+1);
         
         
-        u1_01 = u1(i);
-        u2_01 = u2(i);
-        u3_01 = u3(i);
+        u1_01 = Uk(1,i);
+        u2_01 = Uk(2,i);
+        u3_01 = Uk(3,i);
         
-        u1_02 = u1(i+1);
-        u2_02 = u2(i+1);
-        u3_02 = u3(i+1);
+        u1_02 = Uk(1,i+1);
+        u2_02 = Uk(2,i+1);
+        u3_02 = Uk(3,i+1);
         % A_i, B_i, b_i
         A1 = zeros(4,4);
         A1(1,3) = 1;
@@ -161,7 +169,7 @@ for Index = 1:Max_iter
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i+1)^2*Sigma;
-         J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i)-u3_01));%First order linearization
+         J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
         %J = J + 1/1e9 * step * 1/2*U(3,i)^2*sigma; %Psedo-linearization
         %J = J + 1/1e9 * step * 1/2*u3_01^2*Sigma;
         %J = J + step * Sigma;
@@ -215,19 +223,20 @@ for Index = 1:Max_iter
     CPU_time(Index) = toc;
     
     X_opt = value(X);
+    U_opt = value(U);
     % Check convergence condition and update
     x_opt  = X_opt(1,:)';
     z_opt  = X_opt(2,:)';
     vx_opt = X_opt(3,:)';
     vz_opt = X_opt(4,:)';
-    u1_opt = value(U(1,:))';
-    u2_opt = value(U(2,:))';
-    u3_opt = value(U(3,:))';
+    u1_opt = U_opt(1,:)';
+    u2_opt = U_opt(2,:)';
+    u3_opt = U_opt(3,:)';
     sigma_opt = value(Sigma)';
     
-    State_all(:,Index+1) = [x_opt; z_opt; vx_opt; vz_opt];
-    Control_all(:,Index) = [u1_opt; u2_opt; u3_opt];
-    Sigma_all(:,Index+1) = sigma_opt;
+    %State_all(:,Index+1) = [x_opt; z_opt; vx_opt; vz_opt];
+    %Control_all(:,Index) = [u1_opt; u2_opt; u3_opt];
+    %Sigma_all(:,Index+1) = sigma_opt;
     
     del = zeros(5,1);
     del(1) = max(abs(x_opt-Xk(1,:)'));
@@ -248,16 +257,38 @@ for Index = 1:Max_iter
     Obj(Index)        = value(Objective); % record objective for each step
     
     Xk1 = Xk;
-    Xk2 = X_opt;
+    Uk1 = Uk;
+    sig1 = ones(col_points,1)*sigma;
+    Zk1 = [Xk1; Uk1; sig1'];
     
+    Uk2 = U_opt;
+    Xk2 = X_opt;
+    sig2 = ones(col_points,1)*sigma_opt;
+    Zk2 = [Xk2; Uk2; sig2'];
+    c = 1;
+    mu=10;% penalty parameter (for constraint violations)
+    if Index >= 2
+        c = DampingCoef(Zk1, Zk2, mu)
+    end
+    DampCoef(Index,1) = c;
+    
+    Xk2   = Xk1 + c*(Xk2 - Xk1); % updated X_k, 7*N
+    Uk2   = Uk1 + c*(Uk2 - Uk1); % updated U_k, 1*N
+%     etak2 = etak1 + c*(etak2 - etak1); % updated eta_k, 1*N
+    sig2   = sig1 + c*(sig2 - sig1); % updated s_k, 1*N
+    Zk2   = [Xk2; Uk2; sig2']; % updated Z_k, 8*N
+    
+    State_all(:,Index+1) = [Xk2(1,:), Xk2(2,:), Xk2(3,:), Xk2(4,:)];
+    Control_all(:,Index) = [Uk2(1,:), Uk2(2,:), Uk2(3,:)];
+    Sigma_all(:,Index+1) = sig2(1,1);
+    %DampingCoef(Zk1, Zk2, mu)
     if (del(1) <= 0.5) && (del(2) <= 0.8) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 2)
         break;
     else
         Xk = Xk2; % X_k-2
         sigma = sigma_opt
-        u1 = u1_opt;
-        u2 = u2_opt;
-        u3 = u3_opt;
+        Uk = Uk2;
+
     end
 end
 
