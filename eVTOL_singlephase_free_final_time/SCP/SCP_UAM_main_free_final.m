@@ -48,7 +48,7 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 15;   % Maximum number of iteration
+Max_iter = 50;   % Maximum number of iteration
 col_points = 150;
 tau = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
