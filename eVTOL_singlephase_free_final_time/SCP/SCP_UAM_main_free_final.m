@@ -11,7 +11,7 @@ clc
 format long
 
 global m rho Sx Sz g CD step
-global cf lambda N w_eta w_s
+global cf lambda N 
 % Parameters
 m      = 240;           % vehicle's mass, kg
 rho    = 1.225;         % air density, kg/m^3
@@ -22,7 +22,7 @@ CD     = 1;             % drag coefficient
 
 cf     = 0.5; % contraction factor (for backtracking line-search)
 lambda = 0.4; % 0 < eta < 0.5 (for Goldstein Conditions)
-w_s   = 1e-2;
+
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
@@ -41,21 +41,21 @@ thetamin = -6*pi/180;    % minimum rotor tip-path-plane pitch angle
 thetamax = 6*pi/180;   % maximum rotor tip-path-plane pitch angle
 
 t0 = 0;
-tf = 25*60;     % required time of arrival (RTA), min
+%tf = 25*60;     % required time of arrival (RTA), min
 
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 50;   % Maximum number of iteration
-col_points = 150;
-tau = linspace(0,1,col_points)';
-step = tau(2)-tau(1);
+Max_iter = 20;   % Maximum number of iteration
+col_points = 150; %define number of colocation points 
+tau = linspace(0,1,col_points)';%define time steps tau from 0 to 1
+step = tau(2)-tau(1);%calculate step size
 N = length(tau);   % N nodes
-sigma_guess = 1460; 
+sigma_guess = 1460; % guess for the final time
 
-
+%set initial state variables
 x = linspace(x0,xf,col_points)';
 z = linspace(z0,zf,col_points)';
 vx = linspace(vx0,vxf,col_points)';
@@ -76,10 +76,12 @@ Sigma_all = zeros(1, Max_iter+1);
 Sigma_all(:,1) = sigma_guess;
 X(:,1) = [x0; z0; vx0; vz0];
 % U(:,1) = [0; 0; 0];
-sigma = sigma_guess;
-u1 = ones(length(tau),1)*210;
+
+sigma = sigma_guess;%sigma for the last iteration
+u1 = ones(length(tau),1)*210;%initialize all control variables
 u2 = ones(length(tau),1)*2300;
 u3 = ones(length(tau),1)*2300;
+%define control and state vectors
 Xk=[x';z';vx';vz'];
 Uk = [u1';u2';u3'];
 
@@ -110,7 +112,7 @@ for Index = 1:Max_iter
         u1_02 = Uk(1,i+1);
         u2_02 = Uk(2,i+1);
         u3_02 = Uk(3,i+1);
-        % A_i, B_i, b_i
+       
         A1 = zeros(4,4);
         A1(1,3) = 1;
         A1(2,4) = 1;
@@ -172,9 +174,9 @@ for Index = 1:Max_iter
          J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
         %J = J + 1/1e9 * step * 1/2*U(3,i)^2*sigma; %Psedo-linearization
         %J = J + 1/1e9 * step * 1/2*u3_01^2*Sigma;
-        %J = J + step * Sigma;
+  
     end
-    %J =  Sigma;
+    
     %---Objective function(functional)
     Objective = J;
     
@@ -187,9 +189,9 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
 %         Cons = Cons + [ norm(U(1:2,j)) <= U(3,j) ];
     end
-     %Cons = Cons + [  Sigma == 1500 ];% added time constraint
+     Cons = Cons + [  Sigma == 1460.5 ];% added time constraint
     %Cons = Cons + [  Sigma == 912.2 ];
-    Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
+    %Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -197,9 +199,9 @@ for Index = 1:Max_iter
     delta = [1000*ones(1,N); 50*ones(1,N); 50*ones(1,N); 50*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
-     sigmak = sigma;
+     
      delta1 =0.3*sigma_guess ;
-     Cons = Cons + [ -delta1 <= Sigma-sigmak <= delta1 ];
+     Cons = Cons + [ -delta1 <= Sigma-sigma <= delta1 ];
     %---Convergence constraint
 %     if Index > 1
 %         coef = 0.95;
@@ -256,15 +258,16 @@ for Index = 1:Max_iter
     Conv_sigma(Index)   = del(5);
     Obj(Index)        = value(Objective); % record objective for each step
     
+    %assign state vector and solution pair zk
     Xk1 = Xk;
     Uk1 = Uk;
-    sig1 = ones(col_points,1)*sigma;
-    Zk1 = [Xk1; Uk1; sig1'];
+    sig1 = ones(col_points,1)*sigma;%change 1x1 variable to 1xn vector
+    Zk1 = [Xk1; Uk1; sig1'];%solution pair from last iteration
     
     Uk2 = U_opt;
     Xk2 = X_opt;
     sig2 = ones(col_points,1)*sigma_opt;
-    Zk2 = [Xk2; Uk2; sig2'];
+    Zk2 = [Xk2; Uk2; sig2'];%solution pair from new iteration
     c = 1;
     mu=10;% penalty parameter (for constraint violations)
     if Index >= 2

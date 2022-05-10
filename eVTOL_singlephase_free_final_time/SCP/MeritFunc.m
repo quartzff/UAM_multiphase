@@ -1,8 +1,6 @@
 % Calculate the value of the merit function
-% Zhenbo Wang, built 06.23.2017, modified 06.23.2017
 function Phi = MeritFunc(Z, mu)
 global m rho Sx Sz g CD step
-global kQ Qdot_max q_max n_max 
 global N w_eta w_s
 % Z = [x'; z'; vx'; vz'; u1'; u2'; u3'; sigma']; % 8*N
 X     = Z(1:4,:); % 7*N
@@ -13,11 +11,11 @@ vz    = Z(4,:)'; % N*1
 u1    = Z(5,:)'; % N*1
 u2    = Z(6,:)'; % N*1
 u3    = Z(7,:)'; % N*1
-sigma = Z(8,1)'; % N*1
+sigma = Z(8,1)'; % 1*1
 U   = Z(5:7,:); % N*3
 
 J=0;
-%Phi = -v(N) + w_s*norm(s,2);
+
 Phi=0;
 for i = 1:N-1
     x01  = X(1,i);
@@ -53,10 +51,10 @@ for i = 1:N-1
          -rho*vx02^2*CD*Sx/(2*m); ...
          -rho*vz02^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_02);(1/m*u2_02)];
     
+    
+    
+    f = X(:,i+1) - X(:,i) - 0.5*step*(sigma*f1+sigma*f2); % 4*1
     J = J + 1/1e9*step*1/2*U(3,i+1)^2*sigma;
-    
-    f = X(:,i) - X(:,i+1) + 0.5*step*(sigma*f1+sigma*f2); % 4*1
-    
     
     Phi = Phi + mu*norm(f,1) +J;
     
