@@ -26,7 +26,8 @@ lambda = 0.4; % 0 < eta < 0.5 (for Goldstein Conditions)
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 27.78;    % initial along-track airspeed, m/s
+vx0 = 13.85; 
+%vx0 = 27.78;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 xf = 20000;     % final along-track distance, m
@@ -48,10 +49,17 @@ t0 = 0;
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<<<<<< Updated upstream
 Max_iter = 20;   % Maximum number of iteration
 col_points = 150; %define number of colocation points 
 tau = linspace(0,1,col_points)';%define time steps tau from 0 to 1
 step = tau(2)-tau(1);%calculate step size
+=======
+Max_iter = 50;   % Maximum number of iteration
+col_points = 100;
+tau = linspace(0,1,col_points)';
+step = tau(2)-tau(1);
+>>>>>>> Stashed changes
 N = length(tau);   % N nodes
 sigma_guess = 1460; % guess for the final time
 
