@@ -49,19 +49,16 @@ t0 = 0;
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-<<<<<<< Updated upstream
-Max_iter = 20;   % Maximum number of iteration
-col_points = 150; %define number of colocation points 
-tau = linspace(0,1,col_points)';%define time steps tau from 0 to 1
-step = tau(2)-tau(1);%calculate step size
-=======
-Max_iter = 50;   % Maximum number of iteration
-col_points = 100;
+
+
+
+Max_iter = 30;   % Maximum number of iteration
+col_points = 50;
 tau = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
->>>>>>> Stashed changes
+
 N = length(tau);   % N nodes
-sigma_guess = 1460; % guess for the final time
+sigma_guess = 1460;%1460; % guess for the final time
 
 %set initial state variables
 x = linspace(x0,xf,col_points)';
@@ -179,7 +176,8 @@ for Index = 1:Max_iter
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i+1)^2*Sigma;
-         J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
+        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+         %J = J + 1/1e9 * step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
         %J = J + 1/1e9 * step * 1/2*U(3,i)^2*sigma; %Psedo-linearization
         %J = J + 1/1e9 * step * 1/2*u3_01^2*Sigma;
   
@@ -197,9 +195,9 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
 %         Cons = Cons + [ norm(U(1:2,j)) <= U(3,j) ];
     end
-     Cons = Cons + [  Sigma == 1460.5 ];% added time constraint
+     Cons = Cons + [  Sigma == 1588 ];% added time constraint
     %Cons = Cons + [  Sigma == 912.2 ];
-    %Cons = Cons + [ 400 <= Sigma <= 1470 ];% added time constraint
+    %Cons = Cons + [ 400 <= Sigma <= 1600 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta

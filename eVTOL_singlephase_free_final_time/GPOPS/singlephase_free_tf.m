@@ -40,8 +40,8 @@ auxdata.vmin   = 0;            % minimum Vx, m/s
 auxdata.vmax   = vx0;          % maximum Vx, m/s
 auxdata.Tmin   = 0;            % minimum net thrust
 auxdata.Tmax   = 4800;         % maximum net thrust
-auxdata.thetamin = -6*pi/180;  % minimum rotor tip-path-plane pitch angle
-auxdata.thetamax = 6*pi/180;   % maximum rotor tip-path-plane pitch angle
+auxdata.thetamin = -30*pi/180;  % minimum rotor tip-path-plane pitch angle
+auxdata.thetamax = 30*pi/180;   % maximum rotor tip-path-plane pitch angle
 
 %-------------------------------------------------------------------%
 %----------------------- Limits on Variables -----------------------%
