@@ -21,7 +21,7 @@ auxdata.CD     = 1;             % drag coefficient
 %-------------------------------------------------------------------%
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 27.78;    % initial along-track airspeed, m/s
+vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 xf = 20000;     % final along-track distance, m
@@ -109,9 +109,9 @@ guess.phase.integral = 0;
 %----------Provide Mesh Refinement Method and Initial Mesh ---------------%
 %-------------------------------------------------------------------------%
 mesh.method       = 'hp-LiuRao-Legendre';%'hp-PattersonRao';
-mesh.maxiterations = 15;
+mesh.maxiterations = 25;
 mesh.colpointsmin = 3;
-mesh.colpointsmax = 10;
+mesh.colpointsmax = 15;
 % mesh.tolerance    = 1e-6;
 mesh.tolerance    = 1e-3;
 

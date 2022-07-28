@@ -51,4 +51,4 @@ phaseout.path  = [path1, path2, path3, path4];
 % ---------------------------------------------------%
 % ------------ Evaluate Integral Cost -------------- %
 % ---------------------------------------------------%
-phaseout.integrand = 1/2*u3/1e9; % minimum energy
+phaseout.integrand = u3/1e9; % minimum energy

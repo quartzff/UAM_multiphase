@@ -10,20 +10,6 @@ clear all
 clc
 format long
 
-global m rho Sx Sz g CD step
-global cf lambda N 
-% Parameters
-m      = 240;           % vehicle's mass, kg
-rho    = 1.225;         % air density, kg/m^3
-Sx     = 2.11;          % vehicle's frontal area, m^2
-Sz     = 1.47;          % drag coefficient
-g      = 9.81;          % gravitaional acceleration, m/s^2
-CD     = 1;             % drag coefficient
-
-cf     = 0.5; % contraction factor (for backtracking line-search)
-lambda = 0.4; % 0 < eta < 0.5 (for Goldstein Conditions)
-
-
 % Parameters
 m      = 240;           % vehicle's mass, kg
 rho    = 1.225;         % air density, kg/m^3
@@ -66,30 +52,29 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 100;   % Maximum number of iteration
+Max_iter = 20;   % Maximum number of iteration
 col_points = 100;
-col_points2 = 150;
 tau = linspace(0,1,col_points)';
-tau1 = linspace(0,1,col_points2)';
+tau1 = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
 N = length(tau)+length(tau1);   % N nodes
 sigma_guess = 730; 
 
 sigma2_guess = 1500-730;
-
 x1 = linspace(x0,x1,col_points)';
 z1 = linspace(z0,z1,col_points)';
 vx1 = linspace(vx0,vx1,col_points)';
 vz1 = linspace(vz0,vz1,col_points)';
 
-x2 = linspace(x1(end),xf,col_points2)';
-z2 = linspace(z1(end),zf,col_points2)';
-vx2 = linspace(vx1(end),vxf,col_points2)';
-vz2 = linspace(vz1(end),vzf,col_points2)';
+x2 = linspace(x1(end),xf,col_points)';
+z2 = linspace(z1(end),zf,col_points)';
+vx2 = linspace(vx1(end),vxf,col_points)';
+vz2 = linspace(vz1(end),vzf,col_points)';
  x = [x1;x2];
  z = [z1;z2];
  vx = [vx1;vx2];
  vz = [vz1;vz2];
+
 
 X = sdpvar(4,N);
 U = sdpvar(3,N);
@@ -111,10 +96,7 @@ sigma = sigma_guess;
 sigma2 = sigma2_guess;
 u1 = ones(N,1)*210;
 u2 = ones(N,1)*2300;
-u3 = ones(N,1)*2300;
-
-Xk=[x';z';vx';vz'];
-Uk = [u1';u2';u3'];
+u3 = ones(N,1)*2300^2;
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -126,25 +108,24 @@ for Index = 1:Max_iter
        % Cons = Cons + [  Sigma == 1500 ];
         % From last step
          
-        x01  = Xk(1,i);
-        z01  = Xk(2,i);
-        vx01 = Xk(3,i);
-        vz01 = Xk(4,i);
+        x01  = x(i);
+        z01  = z(i);
+        vx01 = vx(i);
+        vz01 = vz(i);
 
-        x02  = Xk(1,i+1);
-        z02  = Xk(2,i+1);
-        vx02 = Xk(3,i+1);
-        vz02 = Xk(4,i+1);
+        x02  = x(i+1);
+        z02  = z(i+1);
+        vx02 = vx(i+1);
+        vz02 = vz(i+1);
         
         
-        u1_01 = Uk(1,i);
-        u2_01 = Uk(2,i);
-        u3_01 = Uk(3,i);
+        u1_01 = u1(i);
+        u2_01 = u2(i);
+        u3_01 = u3(i);
         
-        u1_02 = Uk(1,i+1);
-        u2_02 = Uk(2,i+1);
-        u3_02 = Uk(3,i+1);
-        
+        u1_02 = u1(i+1);
+        u2_02 = u2(i+1);
+        u3_02 = u3(i+1);
         % A_i, B_i, b_i
         A1 = zeros(4,4);
         A1(1,3) = 1;
@@ -155,9 +136,8 @@ for Index = 1:Max_iter
         B1 = zeros(4,3);
         B1(3,1) = 1/m;
         B1(4,2) = 1/m;
-        
-        phase_node = col_points;
-        if i <=  phase_node
+
+        if i <= N/2-1
         f1 = [vx01; ...
             vz01; ...
             -rho*vx01^2*CD*Sx/(2*m); ...
@@ -192,13 +172,12 @@ for Index = 1:Max_iter
         G3 = 0.5*step*Sigma*B1*[u1_01;u2_01;0];
         G4 = 0.5*step*Sigma*B2*[u1_02;u2_02;0];
 
-        
+        u11 = U(:,i);
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
-
-
         J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
+        
         else 
         f1 = [vx01; ...
             vz01; ...
@@ -234,26 +213,28 @@ for Index = 1:Max_iter
         G3 = 0.5*step*Sigma2*B1*[u1_01;u2_01;0];
         G4 = 0.5*step*Sigma2*B2*[u1_02;u2_02;0];
 
-        
+        u11 = U(:,i);
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+        
+        
+        
         J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
-        Cons = Cons + [ X(1, phase_node) == 10000 ];
-        Cons = Cons + [ X(2, phase_node) == z0 ];
-        Cons = Cons + [ X(1, phase_node +1) == 10000 ];
-        Cons = Cons + [ X(2, phase_node +1) == z0 ];
+        Cons = Cons + [ X(1,N/2) == xf ];
+        Cons = Cons + [ X(2,N/2) == z0 ];
+        Cons = Cons + [ X(1,N/2 +1) == xf ];
+        Cons = Cons + [ X(2,N/2 +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
 %         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
         %---Objective
-        
-        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        %J = J + 1/1e9*step*1/2*U(3,i)^2;
         
     end
     
@@ -303,9 +284,6 @@ for Index = 1:Max_iter
     sol.info
     CPU_time(Index) = toc;
     
-    X_opt = value(X);
-    U_opt = value(U);
-    
     % Check convergence condition and update
     x_opt  = value(X(1,:))';
     z_opt  = value(X(2,:))';
@@ -342,43 +320,19 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    
-        %assign state vector and solution pair zk
-    Xk1 = Xk;
-    Uk1 = Uk;
-    sig1 = ones(col_points,1)*sigma;%change 1x1 variable to 1xn vector
-    sig1_2 = ones(col_points2,1)*sigma2;
-    Zk1 = [Xk1; Uk1; sig1';sig1_2'];%solution pair from last iteration
-    
-    Uk2 = U_opt;
-    Xk2 = X_opt;
-    sig2 = ones(col_points,1)*sigma_opt;
-    sig2_2 = ones(col_points2,1)*sigma2_opt;
-    Zk2 = [Xk2; Uk2; sig2';sig2_2'];%solution pair from new iteration
-    c = 1;
-    mu=10;% penalty parameter (for constraint violations)
-    if Index >= 2
-        %c = DampingCoef(Zk1, Zk2, mu)%
-        c=0.9;
-    end
-    DampCoef(Index,1) = c;
-    
-    Xk2   = Xk1 + c*(Xk2 - Xk1); % updated X_k, 7*N
-    Uk2   = Uk1 + c*(Uk2 - Uk1); % updated U_k, 1*N
-%     etak2 = etak1 + c*(etak2 - etak1); % updated eta_k, 1*N
-    sig2   = sig1 + c*(sig2 - sig1); % updated s_k, 1*N
-    sig2_2 = sig1_2 + c*(sig2_2 - sig1_2);
-    Zk2   = [Xk2; Uk2; sig2';sig2_2']; % updated Z_k, 8*N
-    
-    
-    
-    if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
+    if (del(1) <= 0.7) && (del(2) <= 0.7) && (del(3) <= 0.7)&& (del(4) <= 0.7)&& (del(5) <= 2)&& (del(6) <= 2)
         break;
     else
-        Xk = Xk2; % X_k-2
-        sigma = sigma_opt
-        sigma2 = sigma2_opt
-        Uk = Uk2;
+        Xk1 = [x'; z'; vx'; vz']; % X_k-2
+        x     = x_opt;
+        z     = z_opt;
+        vx    = vx_opt;
+        vz    = vz_opt;
+        sigma = sigma_opt;
+        sigma2 = sigma2_opt;
+        u1 = u1_opt;
+        u2 = u2_opt;
+        u3 = u3_opt;
     end
 end
 
@@ -486,7 +440,7 @@ ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% u1^2+u2^2-u3^2
+% u1^2+u2^2-u3
 figure
 plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
@@ -521,7 +475,7 @@ for i = 1:Index
     u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,250)';
+tau = linspace(0,1,2*col_points)';
 % x ~ t
 figure
 for i = 1:Index

@@ -10,20 +10,6 @@ clear all
 clc
 format long
 
-global m rho Sx Sz g CD step
-global cf lambda N 
-% Parameters
-m      = 240;           % vehicle's mass, kg
-rho    = 1.225;         % air density, kg/m^3
-Sx     = 2.11;          % vehicle's frontal area, m^2
-Sz     = 1.47;          % drag coefficient
-g      = 9.81;          % gravitaional acceleration, m/s^2
-CD     = 1;             % drag coefficient
-
-cf     = 0.5; % contraction factor (for backtracking line-search)
-lambda = 0.4; % 0 < eta < 0.5 (for Goldstein Conditions)
-
-
 % Parameters
 m      = 240;           % vehicle's mass, kg
 rho    = 1.225;         % air density, kg/m^3
@@ -35,7 +21,7 @@ CD     = 1;             % drag coefficient
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 13.85;    % initial along-track airspeed, m/s
+vx0 = 27.78;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 x1 = 10000;         % phase 1 along-track distance, m
@@ -66,9 +52,9 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 100;   % Maximum number of iteration
-col_points = 100;
-col_points2 = 150;
+Max_iter = 25;   % Maximum number of iteration
+col_points = 50;
+col_points2 = 70;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
@@ -109,12 +95,9 @@ X(:,1) = [x0; z0; vx0; vz0];
 % U(:,1) = [0; 0; 0];
 sigma = sigma_guess;
 sigma2 = sigma2_guess;
-u1 = ones(N,1)*210;
-u2 = ones(N,1)*2300;
-u3 = ones(N,1)*2300;
-
-Xk=[x';z';vx';vz'];
-Uk = [u1';u2';u3'];
+u1 = zeros(N,1)*210;
+u2 = zeros(N,1)*2300;
+u3 = zeros(N,1)*2300;
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -126,24 +109,29 @@ for Index = 1:Max_iter
        % Cons = Cons + [  Sigma == 1500 ];
         % From last step
          
-        x01  = Xk(1,i);
-        z01  = Xk(2,i);
-        vx01 = Xk(3,i);
-        vz01 = Xk(4,i);
+        x01  = x(i);
+        z01  = z(i);
+        vx01 = vx(i);
+        vz01 = vz(i);
 
-        x02  = Xk(1,i+1);
-        z02  = Xk(2,i+1);
-        vx02 = Xk(3,i+1);
-        vz02 = Xk(4,i+1);
+        x02  = x(i+1);
+        z02  = z(i+1);
+        vx02 = vx(i+1);
+        vz02 = vz(i+1);
         
+%         u1_01 = u1_last(i);
+%         u2_01 = u2_last(i);
+%         
+%         u1_02 = u1_last(i+1);
+%         u2_02 = u2_last(i+1);
         
-        u1_01 = Uk(1,i);
-        u2_01 = Uk(2,i);
-        u3_01 = Uk(3,i);
+        u1_01 = u1(i);
+        u2_01 = u2(i);
+        u3_01 = u3(i);
         
-        u1_02 = Uk(1,i+1);
-        u2_02 = Uk(2,i+1);
-        u3_02 = Uk(3,i+1);
+        u1_02 = u1(i+1);
+        u2_02 = u2(i+1);
+        u2_03 = u3(i+1);
         
         % A_i, B_i, b_i
         A1 = zeros(4,4);
@@ -156,8 +144,8 @@ for Index = 1:Max_iter
         B1(3,1) = 1/m;
         B1(4,2) = 1/m;
         
-        phase_node = col_points;
-        if i <=  phase_node
+        phase_node = (col_points+col_points2)/2;
+        if i <=  phase_node-1
         f1 = [vx01; ...
             vz01; ...
             -rho*vx01^2*CD*Sx/(2*m); ...
@@ -196,8 +184,6 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
-
-
         J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
         else 
         f1 = [vx01; ...
@@ -252,8 +238,7 @@ for Index = 1:Max_iter
 %         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
         %---Objective
-        
-        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        J = J + 1/1e9*step*1/2*U(3,i)^2;
         
     end
     
@@ -296,15 +281,13 @@ for Index = 1:Max_iter
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
      options = sdpsettings('verbose',0,'solver','mosek');
+     %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
     sol = optimize(Cons, Objective, options);
     sol.info
     CPU_time(Index) = toc;
-    
-    X_opt = value(X);
-    U_opt = value(U);
     
     % Check convergence condition and update
     x_opt  = value(X(1,:))';
@@ -342,43 +325,19 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    
-        %assign state vector and solution pair zk
-    Xk1 = Xk;
-    Uk1 = Uk;
-    sig1 = ones(col_points,1)*sigma;%change 1x1 variable to 1xn vector
-    sig1_2 = ones(col_points2,1)*sigma2;
-    Zk1 = [Xk1; Uk1; sig1';sig1_2'];%solution pair from last iteration
-    
-    Uk2 = U_opt;
-    Xk2 = X_opt;
-    sig2 = ones(col_points,1)*sigma_opt;
-    sig2_2 = ones(col_points2,1)*sigma2_opt;
-    Zk2 = [Xk2; Uk2; sig2';sig2_2'];%solution pair from new iteration
-    c = 1;
-    mu=10;% penalty parameter (for constraint violations)
-    if Index >= 2
-        %c = DampingCoef(Zk1, Zk2, mu)%
-        c=0.9;
-    end
-    DampCoef(Index,1) = c;
-    
-    Xk2   = Xk1 + c*(Xk2 - Xk1); % updated X_k, 7*N
-    Uk2   = Uk1 + c*(Uk2 - Uk1); % updated U_k, 1*N
-%     etak2 = etak1 + c*(etak2 - etak1); % updated eta_k, 1*N
-    sig2   = sig1 + c*(sig2 - sig1); % updated s_k, 1*N
-    sig2_2 = sig1_2 + c*(sig2_2 - sig1_2);
-    Zk2   = [Xk2; Uk2; sig2';sig2_2']; % updated Z_k, 8*N
-    
-    
-    
     if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
         break;
     else
-        Xk = Xk2; % X_k-2
-        sigma = sigma_opt
-        sigma2 = sigma2_opt
-        Uk = Uk2;
+        Xk1 = [x'; z'; vx'; vz']; % X_k-2
+        x     = x_opt;
+        z     = z_opt;
+        vx    = vx_opt;
+        vz    = vz_opt;
+        sigma = sigma_opt;
+        sigma2 = sigma2_opt;
+        u1 = u1_opt;
+        u2 = u2_opt;
+        u3 = u3_opt;
     end
 end
 
@@ -441,9 +400,9 @@ u3    = value(U(3,:))';
 % % z vs. x
 figure
 plot(x,z,'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Altitude (m)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 20);
+ylabel('Altitude (m)', 'FontSize', 20);
+set(gca,'FontSize',18);
 grid on
 
 % vx vs. x
@@ -486,7 +445,7 @@ ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% u1^2+u2^2-u3^2
+% u1^2+u2^2-u3
 figure
 plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
@@ -521,7 +480,7 @@ for i = 1:Index
     u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,250)';
+tau = linspace(0,1,col_points+col_points2)';
 % x ~ t
 figure
 for i = 1:Index

@@ -109,9 +109,9 @@ X(:,1) = [x0; z0; vx0; vz0];
 % U(:,1) = [0; 0; 0];
 sigma = sigma_guess;
 sigma2 = sigma2_guess;
-u1 = zeros(N,1)*210;
-u2 = zeros(N,1)*2300;
-u3 = ones(length(tau),1)*2300;
+u1 = ones(N,1)*210;
+u2 = ones(N,1)*2300;
+u3 = ones(N,1)*2300;
 
 Xk=[x';z';vx';vz'];
 Uk = [u1';u2';u3'];
@@ -196,6 +196,9 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
+
+
+        J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
         else 
         f1 = [vx01; ...
             vz01; ...
@@ -234,7 +237,7 @@ for Index = 1:Max_iter
         
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
-        
+        J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
@@ -250,7 +253,7 @@ for Index = 1:Max_iter
         
         %---Objective
         
-        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        %J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
         
     end
     
@@ -259,12 +262,9 @@ for Index = 1:Max_iter
     
     %---Control constraints
     for j = 1:N-1
-        Cons = Cons + [ U(3,j)*sin(thetamin) <= U(1,j) <= U(3,j)*sin(thetamax) ];
-        Cons = Cons + [ U(3,j)*cos(thetamax) <= U(2,j) <= U(3,j)*cos(0) ];
-        Cons = Cons + [ 0 <= U(3,j) <= Tmax ];
-%         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j)^2 ];
-        Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
-%         Cons = Cons + [ norm(U(1:2,j)) <= U(3,j) ];
+        Cons = Cons + [ U(2,j)*tan(-thetamax) <= U(1,j) <= U(2,j)*tan(thetamax) ];
+        Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
+        Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
     Cons = Cons + [ 359 <= Sigma <= 1482 ];% added time constraint
@@ -295,7 +295,8 @@ for Index = 1:Max_iter
     %------------------------- Solve the problem --------------------------
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','mosek');
+     %options = sdpsettings('verbose',0,'solver','mosek');
+     options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
@@ -347,8 +348,8 @@ for Index = 1:Max_iter
     Xk1 = Xk;
     Uk1 = Uk;
     sig1 = ones(col_points,1)*sigma;%change 1x1 variable to 1xn vector
-    sig_2 = ones(col_points2,1)*sigma2;
-    Zk1 = [Xk1; Uk1; sig1';sig_2'];%solution pair from last iteration
+    sig1_2 = ones(col_points2,1)*sigma2;
+    Zk1 = [Xk1; Uk1; sig1';sig1_2'];%solution pair from last iteration
     
     Uk2 = U_opt;
     Xk2 = X_opt;
@@ -358,7 +359,8 @@ for Index = 1:Max_iter
     c = 1;
     mu=10;% penalty parameter (for constraint violations)
     if Index >= 2
-        c = DampingCoef(Zk1, Zk2, mu)
+        %c = DampingCoef(Zk1, Zk2, mu)%
+        c=0.9;
     end
     DampCoef(Index,1) = c;
     
@@ -366,23 +368,18 @@ for Index = 1:Max_iter
     Uk2   = Uk1 + c*(Uk2 - Uk1); % updated U_k, 1*N
 %     etak2 = etak1 + c*(etak2 - etak1); % updated eta_k, 1*N
     sig2   = sig1 + c*(sig2 - sig1); % updated s_k, 1*N
-    sig2_2 = sig_2 + c*(sig2 - sig1)
-    Zk2   = [Xk2; Uk2; sig2']; % updated Z_k, 8*N
+    sig2_2 = sig1_2 + c*(sig2_2 - sig1_2);
+    Zk2   = [Xk2; Uk2; sig2';sig2_2']; % updated Z_k, 8*N
     
     
     
     if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
         break;
     else
-        Xk1 = [x'; z'; vx'; vz']; % X_k-2
-        x     = x_opt;
-        z     = z_opt;
-        vx    = vx_opt;
-        vz    = vz_opt;
-        sigma = sigma_opt;
-        sigma2 = sigma2_opt;
-        u1 = u1_opt;
-        u2 = u2_opt;
+        Xk = Xk2; % X_k-2
+        sigma = sigma_opt
+        sigma2 = sigma2_opt
+        Uk = Uk2;
     end
 end
 
@@ -476,7 +473,7 @@ grid on
 
 % T
 figure
-plot(x(1:N-1),u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x(1:N-1),sqrt(u3(1:N-1)),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
 ylabel('Thrust (N)', 'FontSize', 18);
 set(gca,'FontSize',16);
@@ -484,7 +481,7 @@ grid on
 
 % theta
 figure
-plot(x(1:N-1),asin(u1(1:N-1)./u3(1:N-1))*180/pi,'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x(1:N-1),atan(u1(1:N-1)./u2(1:N-1))*180/pi,'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
 ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
@@ -492,9 +489,9 @@ grid on
 
 % u1^2+u2^2-u3^2
 figure
-plot(x(1:N-1),sqrt(u1(1:N-1).^2+u2(1:N-1).^2)-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('u1^2+u2^2-u3^2', 'FontSize', 18);
+ylabel('u1^2+u2^2-u3', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 

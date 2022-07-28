@@ -82,7 +82,7 @@ bounds.phase.control.lower = [u1Min, u2Min, u3Min];
 bounds.phase.control.upper = [u1Max, u2Max, u3Max];
 
 % path constraints
-bounds.phase.path.lower = [-1e9, -1e9, -1e9, -1e9];
+bounds.phase.path.lower = [-1e9, -1e9, -1e9, 0];
 bounds.phase.path.upper = [0, 0, 0, 0];
 
 % integral objective function
@@ -92,7 +92,7 @@ bounds.phase.integral.upper = 1e15;
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
 %-------------------------------------------------------------------------%
-tGuess              = [t0; 1400];
+tGuess              = [t0; 1470];
 xGuess              = [x0; xf];
 zGuess              = [z0; zf];
 vxGuess             = [vx0; vxf];

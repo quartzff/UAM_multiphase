@@ -21,7 +21,7 @@ CD     = 1;             % drag coefficient
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 14.8;    % initial along-track airspeed, m/s
+vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 xf = 20000;     % final along-track distance, m
@@ -53,11 +53,11 @@ vzG = linspace(vz0,vzf,10000)';
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 15;   % Maximum number of iteration
-col_points = 200;
+col_points = 60;
 tau = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
 N = length(tau);   % N nodes
-sigma_guess = 1444; 
+sigma_guess = 1470; 
 
 
 x = linspace(x0,xf,col_points)';
@@ -175,7 +175,9 @@ for Index = 1:Max_iter
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i)^2;
-        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        %J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
+        
         %J = J + 1/1e9 *step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
     end
     
@@ -190,7 +192,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ sqrt(U(1,j)^2 + U(2,j)^2) <= U(3,j) ];
     end
     %Cons = Cons + [  Sigma == 1450 ];% added time constraint
-    Cons = Cons + [ 300 <= Sigma <= 4000 ];% added time constraint
+    %Cons = Cons + [ 300 <= Sigma <= 4000 ];% added time constraint
+    Cons = Cons + [ 400 <= Sigma <= 1600 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -199,7 +202,7 @@ for Index = 1:Max_iter
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
     sigmak = sigma;
-    delta1 =0.5*sigma_guess ;
+    delta1 =0.1*sigma_guess ;
     Cons = Cons + [ -delta1 <= Sigma-sigmak <= delta1 ];
     %---Convergence constraint
 %     if Index > 1
@@ -216,8 +219,8 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     options = sdpsettings('verbose',0,'solver','sedumi');
-     %options = sdpsettings('verbose',0,'solver','mosek');
+     %options = sdpsettings('verbose',0,'solver','sedumi');
+     options = sdpsettings('verbose',0,'solver','mosek');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     

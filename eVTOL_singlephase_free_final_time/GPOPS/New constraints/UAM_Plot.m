@@ -58,7 +58,7 @@ grid on
 
 % theta
 figure
-plot(x,asin(u1./sqrt(u3))*180/pi,'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x,atan(u1./u2)*180/pi,'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
 ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
