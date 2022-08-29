@@ -67,13 +67,13 @@ vz = linspace(vz0,vzf,col_points)';
 
 
 X = sdpvar(4,N);
-U = sdpvar(3,N);
+U = sdpvar(2,N);
 Sigma = sdpvar(1,1);
 
 % Store the states & controls
 State_all = zeros(4*N, Max_iter+1);
 State_all(:,1) = [x; z; vx; vz];
-Control_all = zeros(3*N, Max_iter);
+Control_all = zeros(2*N, Max_iter);
 Del_state = zeros(5, Max_iter);
 Sigma_all = zeros(1, Max_iter+1);
 Sigma_all(:,1) = sigma_guess;
@@ -82,7 +82,7 @@ X(:,1) = [x0; z0; vx0; vz0];
 sigma = sigma_guess;
 u1 = zeros(length(tau),1)*210;
 u2 = zeros(length(tau),1)*2300;
-u3 = ones(length(tau),1)*2300^2;
+
 
 
 %--------------------------- Iteration procedure --------------------------
@@ -104,15 +104,15 @@ for Index = 1:Max_iter
         z02  = z(i+1);
         vx02 = vx(i+1);
         vz02 = vz(i+1);
-        
-        
+        %u1 is T
+        %u2 is theta
         u1_01 = u1(i);
         u2_01 = u2(i);
-        u3_01 = u3(i);
+        
         
         u1_02 = u1(i+1);
         u2_02 = u2(i+1);
-        u3_02 = u3(i+1);
+        
         
         % A_i, B_i, b_i
         A1 = zeros(4,4);
@@ -121,16 +121,16 @@ for Index = 1:Max_iter
         A1(3,3) = -rho*vx01*CD*Sx/m;
         A1(4,4) = -rho*vz01*CD*Sz/m;
 
-        B1 = zeros(4,3);
+        B1 = zeros(4,2);
         B1(3,1) = 1/m;
         B1(4,2) = 1/m;
 
         f1 = [vx01; ...
             vz01; ...
             -rho*vx01^2*CD*Sx/(2*m); ...
-            -rho*vz01^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_01);(1/m*u2_01)];
+            -rho*vz01^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_01*sin(u2_01));(1/m*u1_01*cos(u2_01))];
         
-        b1 = Sigma*f1 - sigma*A1*[x01; z01; vx01; vz01] - sigma*B1*[u1_01;u2_01;u3_01];
+        b1 = Sigma*f1 - sigma*A1*[x01; z01; vx01; vz01] - sigma*B1*[u1_01;u2_01];
 
         % A_i+1, B_i+1, b_i+1
         A2 = zeros(4,4);
@@ -139,16 +139,16 @@ for Index = 1:Max_iter
         A2(3,3) = -rho*vx02*CD*Sx/m;
         A2(4,4) = -rho*vz02*CD*Sz/m;
 
-        B2 = zeros(4,3);
+        B2 = zeros(4,2);
         B2(3,1) = 1/m;
         B2(4,2) = 1/m;
 
         f2 =[vx02; ...
             vz02; ...
             -rho*vx02^2*CD*Sx/(2*m); ...
-            -rho*vz02^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_02);(1/m*u2_02)];
+            -rho*vz02^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_02*sin(u2_02));(1/m*u1_02*cos(u2_02))];
         
-        b2 = Sigma*f2 - (sigma*A2*[x02; z02; vx02; vz02] + sigma*B2*[ u1_02;u2_02;u3_02]);
+        b2 = Sigma*f2 - (sigma*A2*[x02; z02; vx02; vz02] + sigma*B2*[ u1_02;u2_02]);
 
         % H1, H2, G1, G2
         H1 = eye(4)+0.5*step*A1*sigma;
@@ -156,8 +156,8 @@ for Index = 1:Max_iter
         G1 = 0.5*step*B1*sigma;
         G2 = 0.5*step*B2*sigma;
         
-        G3 = 0.5*step*Sigma*B1*[u1_01;u2_01;0];
-        G4 = 0.5*step*Sigma*B2*[u1_02;u2_02;0];
+        G3 = 0.5*step*Sigma*B1*[u1_01;u2_01];
+        G4 = 0.5*step*Sigma*B2*[u1_02;u2_02];
 
         u11 = U(:,i);
         %---Linearized dynamics
@@ -175,8 +175,9 @@ for Index = 1:Max_iter
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i)^2;
-        J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
-        %J = J + (1/1e9*step*Sigma*U(3,i));
+        %J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        %J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
+        J = J + 1/1e9*step*1/2*U(1,i)^2*sigma;
         %J = J + 1/1e9 *step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
     end
     
@@ -185,9 +186,11 @@ for Index = 1:Max_iter
     
     %---Control constraints
     for j = 1:N
-        Cons = Cons + [ U(2,j)*tan(-thetamax) <= U(1,j) <= U(2,j)*tan(thetamax) ];
-        Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
-        Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
+%         Cons = Cons + [ U(2,j)*tan(-thetamax) <= U(1,j) <= U(2,j)*tan(thetamax) ];
+%         Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
+        %Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
+        Cons = Cons + [ 0 <= U(1,j) <= 4800 ];
+        Cons = Cons + [ thetamin <= U(2,j) <= thetamax ];
     end
     %Cons = Cons + [  Sigma == 1450 ];% added time constraint
     %Cons = Cons + [ 300 <= Sigma <= 4000 ];% added time constraint
@@ -218,10 +221,10 @@ for Index = 1:Max_iter
     %------------------------- Solve the problem --------------------------
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','ecos');
-     %options = sdpsettings('verbose',0,'solver','mosek');
+     options = sdpsettings('verbose',0,'solver','mosek');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
+     %options = sdpsettings('verbose',0,'solver','ecos');
     
     sol = optimize(Cons, Objective, options);
     sol.info
@@ -234,11 +237,11 @@ for Index = 1:Max_iter
     vz_opt = value(X(4,:))';
     u1_opt = value(U(1,:))';
     u2_opt = value(U(2,:))';
-    u3_opt = value(U(3,:))';
+    %u3_opt = value(U(3,:))';
     sigma_opt = value(Sigma)'
     
     State_all(:,Index+1) = [x_opt; z_opt; vx_opt; vz_opt];
-    Control_all(:,Index) = [u1_opt; u2_opt; u3_opt];
+    Control_all(:,Index) = [u1_opt; u2_opt];
     Sigma_all(:,Index+1) = sigma_opt;
     
     del = zeros(5,1);
@@ -259,7 +262,7 @@ for Index = 1:Max_iter
     Conv_sigma(Index)   = del(5);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 0.2) && (del(2) <= 0.2) && (del(3) <= 0.2)&& (del(4) <= 0.5)&& (del(5) <= 0.5)
+    if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 2)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -270,7 +273,7 @@ for Index = 1:Max_iter
         sigma = sigma_opt;
         u1 = u1_opt;
         u2 = u2_opt;
-        u3 = u3_opt;
+        %u3 = u3_opt;
     end
 end
 

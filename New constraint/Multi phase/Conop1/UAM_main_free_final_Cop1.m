@@ -21,7 +21,7 @@ CD     = 1;             % drag coefficient
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 27.78;    % initial along-track airspeed, m/s
+vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 x1 = 20000;         % phase 1 along-track distance, m
@@ -272,8 +272,8 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','ecos');
+     options = sdpsettings('verbose',0,'solver','sedumi');
+     %options = sdpsettings('verbose',0,'solver','ecos');
      %options = sdpsettings('verbose',0,'solver','mosek');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
@@ -598,6 +598,8 @@ u1S    = u1;
 u2S    = u2;
 u3S    = u3;
 TS     = u3;
+thetaS = atan(u1./u2)*180/pi;
+
 thetaS = asin(u1./u3)*180/pi;
 save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 

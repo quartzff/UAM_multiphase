@@ -21,7 +21,7 @@ auxdata.CD     = 1;          % drag coefficient
 
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 27.78;    % initial along-track airspeed, m/s
+vx0 = 17.78;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 xf = 20000;     % final along-track distance, m
@@ -86,7 +86,7 @@ bounds.phase(iphase).finalstate.upper = [xf, z0, vxf, vzf];
 bounds.phase(iphase).control.lower = [u1Min, u2Min, u3Min];
 bounds.phase(iphase).control.upper = [u1Max, u2Max, u3Max];
 bounds.phase(iphase).path.lower = [-1e9, -1e9, -1e9, -1e9];
-bounds.phase(iphase).path.upper = [0, 0, 0, 0];
+bounds.phase(iphase).path.upper = [0, 0, 0, 1e9];
 
 guess.phase(iphase).time = [t0; t1_low];
 guess.phase(iphase).state(:,1) = [x0; xf];
@@ -117,7 +117,7 @@ bounds.phase(iphase).finalstate.upper = [xf, zf, vxf, vzf];
 bounds.phase(iphase).control.lower = [u1Min, u2Min, u3Min];
 bounds.phase(iphase).control.upper = [u1Max, u2Max, u3Max];
 bounds.phase(iphase).path.lower = [-1e9, -1e9, -1e9, -1e9,];
-bounds.phase(iphase).path.upper = [0, 0, 0, 0];
+bounds.phase(iphase).path.upper = [0, 0, 0, 1e9];
 
 guess.phase(iphase).time = [t1_low; tf];
 guess.phase(iphase).state(:,1) = [xf; xf];

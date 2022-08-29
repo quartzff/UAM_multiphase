@@ -24,7 +24,7 @@ z0 = 500;       % initial altitude, m
 vx0 = 27.78;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
-x1 = 10000;         % phase 1 along-track distance, m
+x1 = 20000;         % phase 1 along-track distance, m
 z1 = 500;       % phase 1 altitude, m
 vx1 = 0;    % phase 1 along-track airspeed, m/s
 vz1 = 0;        % phase 1 vertical airspeed, m/s
@@ -52,26 +52,25 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 25;   % Maximum number of iteration
-col_points = 50;
-col_points2 = 70;
+Max_iter = 20;   % Maximum number of iteration
+col_points = 75;
 tau = linspace(0,1,col_points)';
-tau1 = linspace(0,1,col_points2)';
+tau1 = linspace(0,1,col_points)';
 step = tau(2)-tau(1);
 N = length(tau)+length(tau1);   % N nodes
-sigma_guess = 730; 
+sigma_guess = 24*60; 
 
-sigma2_guess = 1500-730;
+sigma2_guess = 3*60;
 
 x1 = linspace(x0,x1,col_points)';
 z1 = linspace(z0,z1,col_points)';
 vx1 = linspace(vx0,vx1,col_points)';
 vz1 = linspace(vz0,vz1,col_points)';
 
-x2 = linspace(x1(end),xf,col_points2)';
-z2 = linspace(z1(end),zf,col_points2)';
-vx2 = linspace(vx1(end),vxf,col_points2)';
-vz2 = linspace(vz1(end),vzf,col_points2)';
+x2 = linspace(x1(end),xf,col_points)';
+z2 = linspace(z1(end),zf,col_points)';
+vx2 = linspace(vx1(end),vxf,col_points)';
+vz2 = linspace(vz1(end),vzf,col_points)';
  x = [x1;x2];
  z = [z1;z2];
  vx = [vx1;vx2];
@@ -95,9 +94,9 @@ X(:,1) = [x0; z0; vx0; vz0];
 % U(:,1) = [0; 0; 0];
 sigma = sigma_guess;
 sigma2 = sigma2_guess;
-u1 = zeros(N,1)*210;
-u2 = zeros(N,1)*2300;
-u3 = zeros(N,1)*2300;
+u1 = ones(N,1)*210;
+u2 = ones(N,1)*2300;
+u3 = ones(N,1)*2300^2;
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -119,11 +118,6 @@ for Index = 1:Max_iter
         vx02 = vx(i+1);
         vz02 = vz(i+1);
         
-%         u1_01 = u1_last(i);
-%         u2_01 = u2_last(i);
-%         
-%         u1_02 = u1_last(i+1);
-%         u2_02 = u2_last(i+1);
         
         u1_01 = u1(i);
         u2_01 = u2(i);
@@ -131,8 +125,7 @@ for Index = 1:Max_iter
         
         u1_02 = u1(i+1);
         u2_02 = u2(i+1);
-        u2_03 = u3(i+1);
-        
+        u3_02 = u3(i+1);
         % A_i, B_i, b_i
         A1 = zeros(4,4);
         A1(1,3) = 1;
@@ -143,9 +136,8 @@ for Index = 1:Max_iter
         B1 = zeros(4,3);
         B1(3,1) = 1/m;
         B1(4,2) = 1/m;
-        
-        phase_node = (col_points+col_points2)/2;
-        if i <=  phase_node-1
+
+        if i <= N/2-1
         f1 = [vx01; ...
             vz01; ...
             -rho*vx01^2*CD*Sx/(2*m); ...
@@ -180,11 +172,12 @@ for Index = 1:Max_iter
         G3 = 0.5*step*Sigma*B1*[u1_01;u2_01;0];
         G4 = 0.5*step*Sigma*B2*[u1_02;u2_02;0];
 
-        
+        u11 = U(:,i);
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
         J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
+        
         else 
         f1 = [vx01; ...
             vz01; ...
@@ -220,25 +213,28 @@ for Index = 1:Max_iter
         G3 = 0.5*step*Sigma2*B1*[u1_01;u2_01;0];
         G4 = 0.5*step*Sigma2*B2*[u1_02;u2_02;0];
 
-        
+        u11 = U(:,i);
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+        
+        
+        
         J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
-        Cons = Cons + [ X(1, phase_node) == 10000 ];
-        Cons = Cons + [ X(2, phase_node) == z0 ];
-        Cons = Cons + [ X(1, phase_node +1) == 10000 ];
-        Cons = Cons + [ X(2, phase_node +1) == z0 ];
+        Cons = Cons + [ X(1,N/2) == xf ];
+        Cons = Cons + [ X(2,N/2) == z0 ];
+        Cons = Cons + [ X(1,N/2 +1) == xf ];
+        Cons = Cons + [ X(2,N/2 +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
 %         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
         %---Objective
-        J = J + 1/1e9*step*1/2*U(3,i)^2;
+        %J = J + 1/1e9*step*1/2*U(3,i)^2;
         
     end
     
@@ -252,8 +248,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
-    Cons = Cons + [ 359 <= Sigma <= 1482 ];% added time constraint
-    Cons = Cons + [ 30 <= Sigma2 <= 1400 ];% added time constraint
+    Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
+    Cons = Cons + [ 30 <= Sigma2 <= 1000 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -261,15 +257,12 @@ for Index = 1:Max_iter
     delta = [2e3*ones(1,N); 5e2*ones(1,N); 50*ones(1,N); 50*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
-    sigmak = sigma;
+    
     delta1 =0.5*sigma_guess ;
-    Cons = Cons + [ -delta1 <= Sigma-sigmak <= delta1 ];
-    %---Convergence constraint
-%     if Index > 1
-%         coef = 0.95;
-%         delta2 = coef*abs(Xk-Xk1);
-%         Cons = Cons + [ -delta2 <= X-Xk <= delta2 ];
-%     end
+    Cons = Cons + [ -delta1 <= Sigma-sigma <= delta1 ];
+    
+    delta2 =0.5*sigma2_guess ;
+    Cons = Cons + [ -delta1 <= Sigma2-sigma2 <= delta2 ];
 
     %---Terminal constraints
     Cons = Cons + [ X(1,N) == xf ];
@@ -279,9 +272,9 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     %options = sdpsettings('verbose',0,'solver','sedumi');
+     options = sdpsettings('verbose',0,'solver','sedumi');
+     %options = sdpsettings('verbose',0,'solver','ecos');
      %options = sdpsettings('verbose',0,'solver','mosek');
-     options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
@@ -325,7 +318,7 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
+    if (del(1) <= 0.7) && (del(2) <= 0.7) && (del(3) <= 0.7)&& (del(4) <= 0.7)&& (del(5) <= 2)&& (del(6) <= 2)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -402,6 +395,7 @@ figure
 plot(x,z,'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 20);
 ylabel('Altitude (m)', 'FontSize', 20);
+xlim([0 20000])
 set(gca,'FontSize',18);
 grid on
 
@@ -480,7 +474,7 @@ for i = 1:Index
     u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,col_points+col_points2)';
+tau = linspace(0,1,2*col_points)';
 % x ~ t
 figure
 for i = 1:Index
@@ -588,15 +582,24 @@ grid on
 CPU_time = sum(CPU_time)
 
 %% Save the results to compare with SCP
-% tS     = t;
-% xS     = x;
-% zS     = z;
-% vxS    = vx;
-% vzS    = vz;
-% u1S    = u1;
-% u2S    = u2;
-% u3S    = u3;
-% TS     = u3;
-% thetaS = asin(u1./u3)*180/pi;
-% save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
+tau = linspace(0,1,col_points)';
+t1 = value(Sigma)*tau;
+t2 = value(Sigma2)*tau1;
+t2 = value(Sigma)+t2;
+t = [t1;t2];
+
+
+tS     = t;
+xS     = x;
+zS     = z;
+vxS    = vx;
+vzS    = vz;
+u1S    = u1;
+u2S    = u2;
+u3S    = u3;
+TS     = u3;
+thetaS = atan(u1./u2)*180/pi;
+
+thetaS = asin(u1./u3)*180/pi;
+save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 

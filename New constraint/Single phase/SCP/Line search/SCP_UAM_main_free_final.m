@@ -195,7 +195,7 @@ for Index = 1:Max_iter
      %Cons = Cons + [  Sigma == 1480.63 ];% added time constraint
     %Cons = Cons + [  Sigma == 912.2 ];
     Cons = Cons + [ 400 <= Sigma <= 1600 ];% added time constraint
-    
+    %Cons = Cons + [  Sigma == 25*60 ];
     %---Trust-region constraint
     % |X-Xk|<delta
     %Xk = [x'; z'; vx'; vz']; % X_k-1

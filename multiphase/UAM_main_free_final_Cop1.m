@@ -181,8 +181,10 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
-        J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
-        
+        %J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
+        a=u3_01^2*sigma+2*u3_01*sigma*(U(3,i)-u3_01);
+       
+        J = J + 1/1e9*step*(a+u3_01^2*(Sigma-sigma)+sigma*(U(3,i)-u3_01)^2+2*u3_01*(U(3,i)-u3_01)*(Sigma-sigma));
         else 
         f1 = [vx01; ...
             vz01; ...
@@ -223,8 +225,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
         
         
-        
-        J = J + 1/1e9*step*(sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2));
+        J = J + 1/1e9*step*((u3_01^2*sigma2)+2*u3_01*sigma2*(U(3,i)-u3_01)+u3_01^2*(Sigma2-sigma2)+sigma2*(U(3,i)-u3_01)^2+2*u3_01*(U(3,i)-u3_01)*(Sigma2-sigma2));
+        %J = J + 1/1e9*step*(sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];

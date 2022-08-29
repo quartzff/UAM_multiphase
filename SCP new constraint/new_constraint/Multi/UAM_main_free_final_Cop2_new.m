@@ -54,7 +54,7 @@ tf = 25*60;     % required time of arrival (RTA), min
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 25;   % Maximum number of iteration
 col_points = 50;
-col_points2 = 70;
+col_points2 = 80;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
@@ -279,8 +279,8 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','mosek');
+     options = sdpsettings('verbose',0,'solver','sedumi');
+     %options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
