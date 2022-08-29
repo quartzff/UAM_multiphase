@@ -21,6 +21,7 @@ hold on
 plot(tS, xS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Along-track distance (m)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
@@ -33,6 +34,7 @@ hold on
 plot(tS, zS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Altitude (m)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
@@ -45,6 +47,7 @@ hold on
 plot(tS, vxS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Along-track airspeed (m/s)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
@@ -57,6 +60,7 @@ hold on
 plot(tS, vzS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Vertical airspeed (m/s)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
@@ -106,22 +110,23 @@ hold on
 plot(tS, sqrt(TS), 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Net thrust (N)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
 grid on
 
-% T vs. t
-figure
-plot(tG(250:326), TG(250:326), 'k-*', 'markersize', 7, 'linewidth', 1.5);
-hold on
-plot(tS(72:150), sqrt(TS((72:150))), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Net thrust (N)', 'FontSize', 18);
-leg = legend('GPOPS', 'SCP');
-set(leg,'FontSize',16);
-set(gca,'FontSize',16);
-grid on
+% % T vs. t
+% figure
+% plot(tG(250:326), TG(250:326), 'k-*', 'markersize', 7, 'linewidth', 1.5);
+% hold on
+% plot(tS(72:150), sqrt(TS((72:150))), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 18);
+% ylabel('Net thrust (N)', 'FontSize', 18);
+% leg = legend('GPOPS', 'SCP');
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% grid on
 
 % Theta vs. t
 figure
@@ -130,21 +135,22 @@ hold on
 plot(tS, thetaS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Pitch angle (deg)', 'FontSize', 18);
+xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 set(leg,'FontSize',16);
 set(gca,'FontSize',16);
 grid on
 
-
-% Theta vs. t
-figure
-plot(tG(250:326), thetaG(250:326), 'k-*', 'markersize', 7, 'linewidth', 1.5);
-hold on
-plot(tS(72 :150), thetaS(72:150), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Pitch angle (deg)', 'FontSize', 18);
-leg = legend('GPOPS', 'SCP');
-set(leg,'FontSize',16);
-set(gca,'FontSize',16);
-grid on
+% 
+% % Theta vs. t
+% figure
+% plot(tG(250:326), thetaG(250:326), 'k-*', 'markersize', 7, 'linewidth', 1.5);
+% hold on
+% plot(tS(72 :150), thetaS(72:150), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 18);
+% ylabel('Pitch angle (deg)', 'FontSize', 18);
+% leg = legend('GPOPS', 'SCP');
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% grid on
 

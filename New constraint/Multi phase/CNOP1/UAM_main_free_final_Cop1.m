@@ -21,7 +21,7 @@ CD     = 1;             % drag coefficient
 %---------------------- Initial reference trajectory ----------------------
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 27.78;    % initial along-track airspeed, m/s
+vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 x1 = 20000;         % phase 1 along-track distance, m
@@ -77,6 +77,8 @@ vz2 = linspace(vz1(end),vzf,col_points)';
  vz = [vz1;vz2];
 
 X = sdpvar(4,N);
+
+q = sdpvar(4,N);
 U = sdpvar(3,N);
 Sigma = sdpvar(1,1);
 Sigma2 = sdpvar(1,1);
@@ -174,10 +176,11 @@ for Index = 1:Max_iter
 
         u11 = U(:,i);
         %---Linearized dynamics
-        Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+        Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2+q(:,i)) ];  % N
+        %Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
         J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
-        
+        %J = J + (1/1e9*step*((sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma))+(1e5*norm(q,1))));
         else 
         f1 = [vx01; ...
             vz01; ...
@@ -215,11 +218,13 @@ for Index = 1:Max_iter
 
         u11 = U(:,i);
         %---Linearized dynamics
-        Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+        Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2+q(:,i)) ];  % N
+        %Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ]; 
         
         
         
         J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
+        %J = J + (1/1e9*step*((sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2))+(1e5*norm(q,1))));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
@@ -239,7 +244,7 @@ for Index = 1:Max_iter
     end
     
     %---Objective function(functional)
-    Objective = J;
+    Objective = J+(1e5*norm(q,1));
     
     %---Control constraints
     for j = 1:N-1
@@ -254,14 +259,14 @@ for Index = 1:Max_iter
     %---Trust-region constraint
     % |X-Xk|<delta
     Xk = [x'; z'; vx'; vz']; % X_k-1
-    delta = [2e3*ones(1,N); 5e2*ones(1,N); 50*ones(1,N); 50*ones(1,N)];
+    delta = [50*ones(1,N); 50*ones(1,N); 5*ones(1,N); 5*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
     
-    delta1 =0.5*sigma_guess ;
+    delta1 =0.1*sigma_guess ;
     Cons = Cons + [ -delta1 <= Sigma-sigma <= delta1 ];
     
-    delta2 =0.5*sigma2_guess ;
+    delta2 =0.1*sigma2_guess ;
     Cons = Cons + [ -delta1 <= Sigma2-sigma2 <= delta2 ];
 
     %---Terminal constraints
@@ -272,14 +277,15 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     options = sdpsettings('verbose',0,'solver','sedumi');
+     %options = sdpsettings('verbose',0,'solver','sedumi');
      %options = sdpsettings('verbose',0,'solver','ecos');
-     %options = sdpsettings('verbose',0,'solver','mosek');
+     options = sdpsettings('verbose',0,'solver','mosek');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
     sol = optimize(Cons, Objective, options);
     sol.info
+    
     CPU_time(Index) = toc;
     
     % Check convergence condition and update
@@ -474,7 +480,7 @@ for i = 1:Index
     u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,2*col_points)';
+tau = 1500*linspace(0,1,2*col_points)';
 % x ~ t
 figure
 for i = 1:Index
