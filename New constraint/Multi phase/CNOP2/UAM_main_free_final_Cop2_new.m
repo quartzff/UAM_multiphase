@@ -280,9 +280,9 @@ for Index = 1:Max_iter
     %------------------------- Solve the problem --------------------------
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','mosek');
+     %options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
-     %options = sdpsettings('verbose',0,'solver','ecos');
+     options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
