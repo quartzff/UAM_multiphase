@@ -163,8 +163,8 @@ for Index = 1:Max_iter
             -rho*vx02^2*CD*Sx/(2*m); ...
             -rho*vz02^2*CD*Sz/(2*m)-g] + [0;0;(1/m*u1_02);(1/m*u2_02)];
         
-        b2 = Sigma*f2 - (sigma*A2*[x02; z02; vx02; vz02] + sigma*B2*[ u1_02;u2_02;0]);
-
+        %b2 = Sigma*f2 - (sigma*A2*[x02; z02; vx02; vz02] +/- sigma*B2*[ u1_02;u2_02;0]);%this is wrong
+        b2 = Sigma*f2 - (sigma*A2*[x02; z02; vx02; vz02] + sigma*B2*[ u1_02;u2_02;0]);%this is wrong
         % H1, H2, G1, G2
         H1 = eye(4)+0.5*step*A1*sigma;
         H2 = eye(4)-0.5*step*A2*sigma;
@@ -345,44 +345,66 @@ end
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            Outputs & Plots                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-figure
+h=figure;
 plot(Conv_I,Conv_x, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta x (m)','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',20)
+ylabel('\Delta x (m)','FontSize',20)
+set(gca,'FontSize',20)
 % axis([1 14 0 6e9])
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_x_conv','-dpdf','-r0')
 
-figure
+
+h=figure;
 plot(Conv_I,Conv_z, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta z (m)','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',20)
+ylabel('\Delta z (m)','FontSize',20)
+set(gca,'FontSize',20)
 % axis([1 14 0 6e9])
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_z_conv','-dpdf','-r0')
 
-figure
+
+h=figure;
 plot(Conv_I,Conv_vx, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta v_x (m/s)','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',20)
+ylabel('\Delta v_x (m/s)','FontSize',20)
+set(gca,'FontSize',20)
 % axis([1 14 0 6e9])
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_vx_conv','-dpdf','-r0')
 
-figure
+h=figure;
 plot(Conv_I,Conv_vz, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta v_z (m/s)','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',20)
+ylabel('\Delta v_z (m/s)','FontSize',20)
+set(gca,'FontSize',20)
 % axis([1 14 0 6e9])
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_vz_conv','-dpdf','-r0')
 
-figure
+h=figure;
 plot(Conv_I,Obj*1e9, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('Objective value','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',20)
+ylabel('Objective value','FontSize',20)
+set(gca,'FontSize',20)
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_obj_conv','-dpdf','-r0')
 
 % %------------------------------- States -----------------------------------
 x_tf     = State_all(1*N,1:Index+1)'
@@ -481,7 +503,10 @@ for i = 1:Index
     u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,col_points+col_points2)';
+tau_1 = sigma_opt*linspace(0,1,col_points)';
+tau_2 = sigma2_opt*linspace(0,1,col_points2)';
+tau_2 = tau_2 +sigma_opt;
+tau = [tau_1;tau_2];
 % x ~ t
 figure
 for i = 1:Index
@@ -495,16 +520,20 @@ set(gca,'Fontsize',16)
 grid on
 
 % z ~ t
-figure
+h=figure;
 for i = 1:Index
     plot(tau/60, z_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
     hold on
 end
 plot(tau/60, z_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Altitude (m)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Time (min)','FontSize',20)
+ylabel('Altitude (m)','FontSize',20)
+set(gca,'Fontsize',20)
 grid on
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(h,'conop1_altitude_conv','-dpdf','-r0')
 
 % vx ~ t
 figure
