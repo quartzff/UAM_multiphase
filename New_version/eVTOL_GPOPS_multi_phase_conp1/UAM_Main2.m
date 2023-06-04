@@ -15,13 +15,21 @@ auxdata.Sz     = 1.47;           % drag coefficient
 auxdata.g      = 9.81;            % gravitaional acceleration, m/s^2
 auxdata.CD     = 1;          % drag coefficient
 
+
+
+
 %-------------------------------------------------------------------%
 %----------------------- Boundary Conditions -----------------------%
 %-------------------------------------------------------------------%
 
+
+
+
+
+
 x0 = 0;         % initial along-track distance, m
 z0 = 500;       % initial altitude, m
-vx0 = 13.85;    % initial along-track airspeed, m/s
+vx0 = 27.78;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
 xf = 20000;     % final along-track distance, m
@@ -32,9 +40,9 @@ vzf = 0;        % final vertical airspeed, m/s
 t0 = 0;
 t1_low = xf/vx0;  % Minimum cruise time
 %t1_up = (25*60)-(500/11); % Max cruise time
-t1_up = (25*60)-(500/27.78);
+t1_up = (25*60)-(500/27.78)
 tf = 25*60;     % required time of arrival (RTA), min
-
+t1_final = 900;
 t1min = xf/vx0;    % Minimum time to arrive fixed point
 t1max = tf - (500/2.5); % Max time to arrive fixed point
 
@@ -43,11 +51,11 @@ auxdata.xmax   = xf;           % maximum x, m
 auxdata.zmin   = zf;              % minimum z, m
 auxdata.zmax   = z0;           % maximum z, m
 auxdata.vmin   = 0;             % minimum Vx, m/s
-auxdata.vmax   = 27.78;         % maximum Vx, m/s
+auxdata.vmax   = abs(vx0);         % maximum Vx, m/s
 auxdata.Tmin   = 0;     % minimum net thrust
 auxdata.Tmax   = 4800;   % maximum net thrust
-auxdata.thetamin = -6*pi/180;    % minimum rotor tip-path-plane pitch angle
-auxdata.thetamax = 6*pi/180;   % maximum rotor tip-path-plane pitch angle
+auxdata.thetamin = -25*pi/180;    % minimum rotor tip-path-plane pitch angle
+auxdata.thetamax = 25*pi/180;   % maximum rotor tip-path-plane pitch angle
 
 %-------------------------------------------------------------------%
 %----------------------- Limits on Variables -----------------------%
@@ -56,26 +64,34 @@ xMin  = auxdata.xmin;              xMax  = auxdata.xmax;
 zMin  = auxdata.zmin;              zMax  = auxdata.zmax;
 vxMin = auxdata.vmin;             vxMax  = auxdata.vmax;
 vzMin = -auxdata.vmax;             vzMax  = auxdata.vmin;
-u1Min = auxdata.Tmax*sin(auxdata.thetamin);
-u1Max = auxdata.Tmax*sin(auxdata.thetamax);
-u2Min = auxdata.Tmin*cos(auxdata.thetamax);
-u2Max = auxdata.Tmax*cos(0);
-u3Min = auxdata.Tmin;
-u3Max = auxdata.Tmax;
+TMin  = auxdata.Tmin;              TMax  = auxdata.Tmax;
+thetaMin = auxdata.thetamin;    thetaMax = auxdata.thetamax;
+
 %-------------------------------------------------------------------%
 %--------------- Set Up Problem Using Data Provided Above ----------%
 %-------------------------------------------------------------------%
 
 
 % -----------------Guess values-------------------------------------%
-
+% % 
+% % tGuess              = [t0; tf];
+%xGuess              = [x0; xf];
+%zGuess              = [z0; z0];
+% % vxGuess             = [vx0; vxf];
+% % vzGuess             = [vz0; vzf];
+% % TGuess              = [TMin; TMax];
+% % thetaGuess          = [thetaMin; thetaMax];
+% % guess.phase.state   = [xGuess, zGuess, vxGuess, vzGuess];
+% % guess.phase.control = [TGuess, thetaGuess];
+% % guess.phase.time    = tGuess;
+% % guess.phase.integral = 0;
 
 iphase = 1;
 
 bounds.phase(iphase).initialtime.lower = [t0];
 bounds.phase(iphase).initialtime.upper = [t0];
-bounds.phase(iphase).finaltime.lower = [t1_low];
-bounds.phase(iphase).finaltime.upper = [t1_up];
+bounds.phase(iphase).finaltime.lower = [t1_final];
+bounds.phase(iphase).finaltime.upper = [t1_final];
 
 bounds.phase(iphase).initialstate.lower = [x0, z0, vx0, vz0];
 bounds.phase(iphase).initialstate.upper = [x0, z0, vx0, vz0];
@@ -83,19 +99,18 @@ bounds.phase(iphase).state.lower = [xMin, zMax, vxMin, vzMin];
 bounds.phase(iphase).state.upper = [xMax, zMax, vxMax, vzMax];
 bounds.phase(iphase).finalstate.lower = [xf, z0, vxf, vzf];
 bounds.phase(iphase).finalstate.upper = [xf, z0, vxf, vzf];
-bounds.phase(iphase).control.lower = [u1Min, u2Min, u3Min];
-bounds.phase(iphase).control.upper = [u1Max, u2Max, u3Max];
-bounds.phase(iphase).path.lower = [-1e9, -1e9, -1e9, -1e9];
-bounds.phase(iphase).path.upper = [0, 0, 0, 1e9];
+bounds.phase(iphase).control.lower = [TMin, thetaMin];
+bounds.phase(iphase).control.upper = [TMax, thetaMax];
+bounds.phase(iphase).path.lower = [-1e9];
+bounds.phase(iphase).path.upper = [0];
 
-guess.phase(iphase).time = [t0; t1_low];
+guess.phase(iphase).time = [t0; t1_final];
 guess.phase(iphase).state(:,1) = [x0; xf];
 guess.phase(iphase).state(:,2) = [z0; z0];
 guess.phase(iphase).state(:,3) = [vx0; vxf];
 guess.phase(iphase).state(:,4) = [vz0; vzf];
-guess.phase(iphase).control(:,1) = [u1Min; u1Max];
-guess.phase(iphase).control(:,2) = [u2Min; u2Max];
-guess.phase(iphase).control(:,3) = [u3Min; u3Max];
+guess.phase(iphase).control(:,1) = [TMin; TMax];
+guess.phase(iphase).control(:,2) = [thetaMin; thetaMax];
 guess.phase(iphase).integral = 0;
 bounds.phase(iphase).integral.lower = 0;
 bounds.phase(iphase).integral.upper = 1e15;
@@ -103,8 +118,8 @@ bounds.phase(iphase).integral.upper = 1e15;
 
 
 iphase = 2;
-bounds.phase(iphase).initialtime.lower = [t1_low];
-bounds.phase(iphase).initialtime.upper = [t1_up];
+bounds.phase(iphase).initialtime.lower = [t1_final];
+bounds.phase(iphase).initialtime.upper = [t1_final];
 bounds.phase(iphase).finaltime.lower = [tf];
 bounds.phase(iphase).finaltime.upper = [tf];
 
@@ -114,19 +129,18 @@ bounds.phase(iphase).state.lower = [xMax, zMin, vxMin, vzMin];
 bounds.phase(iphase).state.upper = [xMax, zMax, vxMax, vzMax];
 bounds.phase(iphase).finalstate.lower = [xf, zf, vxf, vzf];
 bounds.phase(iphase).finalstate.upper = [xf, zf, vxf, vzf];
-bounds.phase(iphase).control.lower = [u1Min, u2Min, u3Min];
-bounds.phase(iphase).control.upper = [u1Max, u2Max, u3Max];
-bounds.phase(iphase).path.lower = [-1e9, -1e9, -1e9, -1e9,];
-bounds.phase(iphase).path.upper = [0, 0, 0, 1e9];
+bounds.phase(iphase).control.lower = [TMin, thetaMin];
+bounds.phase(iphase).control.upper = [TMax, thetaMax];
+bounds.phase(iphase).path.lower = [-1e9];
+bounds.phase(iphase).path.upper = [0];
 
 guess.phase(iphase).time = [t1_low; tf];
 guess.phase(iphase).state(:,1) = [xf; xf];
 guess.phase(iphase).state(:,2) = [z0; zf];
 guess.phase(iphase).state(:,3) = [vxf; vxf];
 guess.phase(iphase).state(:,4) = [vz0; vzf];
-guess.phase(iphase).control(:,1) = [u1Min; u1Max];
-guess.phase(iphase).control(:,2) = [u2Min; u2Max];
-guess.phase(iphase).control(:,3) = [u3Min; u3Max];
+guess.phase(iphase).control(:,1) = [TMin; TMax];
+guess.phase(iphase).control(:,2) = [thetaMin; thetaMax];
 guess.phase(iphase).integral = 0;
 bounds.phase(iphase).integral.lower = 0;
 bounds.phase(iphase).integral.upper = 1e15;
@@ -144,6 +158,31 @@ bounds.eventgroup(2).lower = [xf, zf, vxf, vzf,  tf];%%
 bounds.eventgroup(2).upper = [xf, zf, vxf, vzf,  tf];
 % *BOLD TEXT*
 
+
+
+
+
+
+
+% integral objective function
+% % bounds.phase.integral.lower = 0;
+% % bounds.phase.integral.upper = 1e15;
+
+%-------------------------------------------------------------------------%
+%---------------------- Provide Guess of Solution ------------------------%
+%-------------------------------------------------------------------------%
+% % % tGuess              = [t0; tf];
+% % % xGuess              = [x0; xf];
+% % % zGuess              = [z0; zf];
+% % % vxGuess             = [vx0; vxf];
+% % % vzGuess             = [vz0; vzf];
+% % % TGuess              = [TMin; TMax];
+% % % thetaGuess          = [thetaMin; thetaMax];
+% % % guess.phase.state   = [xGuess, zGuess, vxGuess, vzGuess];
+% % % guess.phase.control = [TGuess, thetaGuess];
+% % % guess.phase.time    = tGuess;
+% % % guess.phase.integral = 0;
+
 %-------------------------------------------------------------------------%
 %----------Provide Mesh Refinement Method and Initial Mesh ---------------%
 %-------------------------------------------------------------------------%
@@ -152,7 +191,7 @@ mesh.maxiterations = 30;
 mesh.colpointsmin = 3;
 mesh.colpointsmax = 10;
 % mesh.tolerance    = 1e-6;
-mesh.tolerance    = 1e-4;
+mesh.tolerance    = 1e-3;
 
 %-------------------------------------------------------------------%
 %---------- Configure Setup Using the information provided ---------%

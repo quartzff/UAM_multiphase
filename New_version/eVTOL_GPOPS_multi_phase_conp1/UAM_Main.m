@@ -152,7 +152,7 @@ mesh.maxiterations = 30;
 mesh.colpointsmin = 3;
 mesh.colpointsmax = 10;
 % mesh.tolerance    = 1e-6;
-mesh.tolerance    = 1e-4;
+mesh.tolerance    = 1e-3;
 
 %-------------------------------------------------------------------%
 %---------- Configure Setup Using the information provided ---------%

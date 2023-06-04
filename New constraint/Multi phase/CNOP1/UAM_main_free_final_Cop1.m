@@ -52,7 +52,7 @@ tf = 25*60;     % required time of arrival (RTA), min
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 20;   % Maximum number of iteration
+Max_iter = 100;   % Maximum number of iteration
 col_points = 50;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points)';
@@ -324,7 +324,8 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 0.7) && (del(2) <= 0.7) && (del(3) <= 0.7)&& (del(4) <= 0.7)&& (del(5) <= 2)&& (del(6) <= 2)
+    converge = 1e-1;
+    if (del(1) <= converge) && (del(2) <= converge) && (del(3) <= converge)&& (del(4) <= converge)&& (del(5) <= converge)&& (del(6) <= converge)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -638,5 +639,5 @@ TS     = u3;
 thetaS = atan(u1./u2)*180/pi;
 
 thetaS = asin(u1./u3)*180/pi;
-save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
+%save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 

@@ -24,7 +24,7 @@ z0 = 500;       % initial altitude, m
 vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
-x1 = 10000;         % phase 1 along-track distance, m
+x1 = 20000;         % phase 1 along-track distance, m
 z1 = 500;       % phase 1 altitude, m
 vx1 = 0;    % phase 1 along-track airspeed, m/s
 vz1 = 0;        % phase 1 vertical airspeed, m/s
@@ -44,19 +44,24 @@ t0 = 0;
 tf = 25*60;     % required time of arrival (RTA), min
 
 
+
+
+
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Max_iter = 100;   % Maximum number of iteration
-col_points = 50;
-col_points2 = 60;
+Max_iter = 25;   % Maximum number of iteration
+col_points = 100;
+col_points2 = 50;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
 N = length(tau)+length(tau1);   % N nodes
-sigma_guess = 730; 
+sigma_guess = 24*60; 
 
-sigma2_guess = 1500-730;
+sigma2_guess = 3*60;
 
 x1 = linspace(x0,x1,col_points)';
 z1 = linspace(z0,z1,col_points)';
@@ -114,8 +119,8 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
-        %J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
-        J = J + (1/1e9*step*(sigma*(U(3,i))));
+        J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
+        
         else 
         [H1, H2, G1, G2, b1, b2] = ComDyn(x01,z01,vx01, vz01, x02, z02, vx02, vz02, u1_01, u2_01, u1_02, u2_02, sigma2, Sigma2, step, m, rho, CD, Sx, Sz, g);
         
@@ -123,16 +128,15 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
         
-        %J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
-        J = J + (1/1e9*step*sigma2*U(3,i));
+        J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
-        Cons = Cons + [ X(1, phase_node) == 10000 ];
+        Cons = Cons + [ X(1, phase_node) == 20000 ];
         Cons = Cons + [ X(2, phase_node) == z0 ];
-        Cons = Cons + [ X(1, phase_node +1) == 10000 ];
+        Cons = Cons + [ X(1, phase_node +1) == 20000 ];
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
@@ -152,10 +156,11 @@ for Index = 1:Max_iter
         Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
         %Cons = Cons + [ U(3,j) == Tmax^2 ];
         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
+        J = J + abs(U(1,j)^2 + U(2,j)^2 - U(3,j));
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
-    Cons = Cons + [ 700 <= Sigma <= 750 ];% added time constraint
-    Cons = Cons + [ 700 <= Sigma2 <= 790 ];% added time constraint
+    Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
+    Cons = Cons + [ 30 <= Sigma2 <= 1000 ];% added time constraint
     %Cons = Cons + [ Sigma == 733.8 ];
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -184,10 +189,10 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     %options = sdpsettings('verbose',0,'solver','sedumi');
+     options = sdpsettings('verbose',0,'solver','sedumi');
      %options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
-     options = sdpsettings('verbose',0,'solver','ecos');
+     %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
@@ -231,7 +236,7 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    converge = 5e-2;
+    converge = 1e-1;
     if (del(1) <= converge) && (del(2) <= converge) && (del(3) <= converge)&& (del(4) <= converge)&& (del(5) <= converge)&& (del(6) <= converge)
         break;
     else
@@ -360,6 +365,20 @@ ylabel('u1^2+u2^2-u3', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
+
+% u1^2+u2^2-u3
+% % figure
+% % plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+% % xlabel('Along-Track Distance (m)', 'FontSize', 18);
+% % ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+% % set(gca,'FontSize',16);
+% % grid on
+figure
+plot(x(1:N-1),sqrt(u1(1:N-1).^2+u2(1:N-1).^2)-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+xlabel('Along-Track Distance (m)', 'FontSize', 18);
+ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+set(gca,'FontSize',16);
+grid on
 %% cold to warm
 Colors = zeros(Index,3);
 Colors(:,1) = linspace(0,1,Index);
@@ -512,5 +531,5 @@ CPU_time = sum(CPU_time)
 % % % u3S    = u3;
 % % % TS     = u3;
 % % % thetaS = asin(u1./u3)*180/pi;
-% % % save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
+% % % save data_scp_2.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 
