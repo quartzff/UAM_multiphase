@@ -83,7 +83,7 @@ sigma = sigma_guess;
 u1 = zeros(length(tau),1)*210;
 u2 = zeros(length(tau),1)*2300;
 u3 = ones(length(tau),1)*2300;
-
+slack = sdpvar(4,N); % Assuming N constraints
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -160,8 +160,12 @@ for Index = 1:Max_iter
         G4 = 0.5*step*Sigma*B2*[u1_02;u2_02;0];
 
         u11 = U(:,i);
+        
+        S = eye(4);
         %---Linearized dynamics
-        Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+         %Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
+         
+         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
         
         %---State constraints
@@ -177,7 +181,9 @@ for Index = 1:Max_iter
         %J = J + 1/1e9*step*1/2*U(3,i)^2;
         %J = J + 1/1e9*step*(sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma));
         J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
-        
+        penalty_weight = 1e5;
+        %J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma))+penalty_weight * sum(sum(slack)));
+        %J = J + 1/1e9*sigma*step*1/2*U(3,i)^2+penalty_weight * sum(sum(slack));
         %J = J + 1/1e9 *step*((1/2*u3_01^2*sigma)+1/2*u3_01^2*(Sigma - sigma)+u3_01*sigma*(U(3,i+1)-u3_01));%First order linearization
     end
     
@@ -193,7 +199,7 @@ for Index = 1:Max_iter
     end
     %Cons = Cons + [  Sigma == 1450 ];% added time constraint
     %Cons = Cons + [ 300 <= Sigma <= 4000 ];% added time constraint
-    Cons = Cons + [ 400 <= Sigma <= 1600 ];% added time constraint
+    Cons = Cons + [ 400 <= Sigma <= 1800 ];% added time constraint
     
     %---Trust-region constraint
     % |X-Xk|<delta
