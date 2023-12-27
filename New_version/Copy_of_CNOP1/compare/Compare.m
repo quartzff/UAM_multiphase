@@ -68,8 +68,8 @@ h = figure;
 plot(tG, vxG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, vxS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 20);
-ylabel('Along-track airspeed (m/s)', 'FontSize', 20);
+xlabel('Time (min)', 'FontSize', 18);
+ylabel('Along-track airspeed (m/s)', 'FontSize', 18);
 xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
@@ -81,13 +81,26 @@ pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 print(h,'conop1_alongspeed','-dpdf','-r0')
 
+
+% figure
+% plot(tG(105 :156), vxG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% hold on
+% plot(tS(99:150), vxS((99:150)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 18);
+% ylabel('Along-track airspeed (m/s)', 'FontSize', 18);
+% leg = legend('GPOPS', 'SCP');
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% grid on
+
+
 % vz vs. t
 h = figure;
 plot(tG, vzG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, vzS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 20);
-ylabel('Vertical airspeed (m/s)', 'FontSize', 20);
+xlabel('Time (min)', 'FontSize', 18);
+ylabel('Vertical airspeed (m/s)', 'FontSize', 18);
 xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
@@ -98,6 +111,19 @@ set(h,'Units','Inches');
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 print(h,'conop1_verticalspeed','-dpdf','-r0')
+
+figure
+plot(tG(105 :156), vzG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
+hold on
+plot(tS(99:150), vzS((99:150)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+xlabel('Time (min)', 'FontSize', 18);
+ylabel('Vertical airspeed (m/s)', 'FontSize', 18);
+leg = legend('GPOPS', 'SCP');
+set(leg,'FontSize',16);
+set(gca,'FontSize',16);
+grid on
+
+
 % % % u1 vs. t
 % % figure
 % % 
@@ -182,16 +208,16 @@ set(h,'Units','Inches');
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 print(h,'conop1_pitch','-dpdf','-r0')
-% 
-% Theta vs. t
+
+% Zoom-in Theta vs. t
 figure
 plot(tG(105 :156), thetaG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS(99 :150), thetaS(99:150), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Pitch angle (deg)', 'FontSize', 18);
-leg = legend('GPOPS', 'SCP');
-set(leg,'FontSize',16);
-set(gca,'FontSize',16);
+% Removed x and y labels
+% Increased fontsize for axis ticks
+set(gca,'FontSize',20);
+% Removed the legend
+legend('off');
 grid on
 

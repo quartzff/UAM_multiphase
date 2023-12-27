@@ -34,7 +34,7 @@ zf = 0;         % final altitude, m
 vxf = 0;        % final along-track airspeed, m/s
 vzf = 0;        % final vertical airspeed, m/s
 
-vmax   = 27.78;    % maximum airspeed
+vmax   = 17;    % maximum airspeed
 Tmin   = 0;      % minimum net thrust
 Tmax   = 4800;   % maximum net thrust, N
 thetamin = -6*pi/180;    % minimum rotor tip-path-plane pitch angle
@@ -53,8 +53,8 @@ tf = 25*60;     % required time of arrival (RTA), min
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 25;   % Maximum number of iteration
-col_points = 100;
-col_points2 = 50;
+col_points = 50;
+col_points2 = 60;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
@@ -140,7 +140,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
-%         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
+        %Cons = Cons + [ u1_01^2 + u2_01^2 == U(3,i+1) ];
+        %Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i)^2;
@@ -156,7 +157,7 @@ for Index = 1:Max_iter
         Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
         %Cons = Cons + [ U(3,j) == Tmax^2 ];
         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
-        J = J + abs(U(1,j)^2 + U(2,j)^2 - U(3,j));
+       % J = J + abs(U(1,j)^2 + U(2,j)^2 - U(3,j));
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
     Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
@@ -189,8 +190,8 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     options = sdpsettings('verbose',0,'solver','sedumi');
-     %options = sdpsettings('verbose',0,'solver','mosek');
+     %options = sdpsettings('verbose',0,'solver','sedumi');
+     options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
      %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
@@ -236,7 +237,7 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    converge = 1e-1;
+    converge = 9e-1;
     if (del(1) <= converge) && (del(2) <= converge) && (del(3) <= converge)&& (del(4) <= converge)&& (del(5) <= converge)&& (del(6) <= converge)
         break;
     else
