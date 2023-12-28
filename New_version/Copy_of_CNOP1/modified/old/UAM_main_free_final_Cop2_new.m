@@ -53,8 +53,8 @@ tf = 25*60;     % required time of arrival (RTA), min
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 25;   % Maximum number of iteration
-col_points = 30;
-col_points2 = 70;
+col_points = 50;
+col_points2 = 60;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
@@ -78,13 +78,13 @@ vz2 = linspace(vz1(end),vzf,col_points2)';
  vz = [vz1;vz2];
 
 X = sdpvar(4,N);
-U = sdpvar(2,N);
+U = sdpvar(3,N);
 Sigma = sdpvar(1,1);
 Sigma2 = sdpvar(1,1);
 
 State_all = zeros(4*N, Max_iter+1);
 State_all(:,1) = [x; z; vx; vz];
-Control_all = zeros(2*N, Max_iter);
+Control_all = zeros(3*N, Max_iter);
 Del_state = zeros(6, Max_iter);
 Sigma_all = zeros(1, Max_iter+1);
 Sigma2_all = zeros(1, Max_iter+1);
@@ -96,7 +96,7 @@ sigma = sigma_guess;
 sigma2 = sigma2_guess;
 u1 = zeros(N,1)*210;
 u2 = zeros(N,1)*2300;
-
+u3 = ones(N,1)*2300^2;
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -109,8 +109,8 @@ for Index = 1:Max_iter
         % From last step
         x01  = x(i); z01  = z(i); vx01 = vx(i); vz01 = vz(i);
         x02  = x(i+1); z02  = z(i+1); vx02 = vx(i+1); vz02 = vz(i+1);
-        u1_01 = u1(i); u2_01 = u2(i); 
-        u1_02 = u1(i+1); u2_02 = u2(i+1); 
+        u1_01 = u1(i); u2_01 = u2(i); u3_01 = u3(i);
+        u1_02 = u1(i+1); u2_02 = u2(i+1); u2_03 = u3(i+1);
         phase_node = col_points;
         if i <=  col_points
 
@@ -119,8 +119,7 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
-        J = J + (1/1e9*step*(sigma*(u1_01^2 + u2_01^2)+sigma*((U(1,i)^2+U(2,i)^2)-(u1_01^2 + u2_01^2))+(u1_01^2 + u2_01^2)*(Sigma-sigma)));
-                
+        J = J + (1/1e9*step*(sigma*u3_01+sigma*(U(3,i)-u3_01)+u3_01*(Sigma-sigma)));
         
         else 
         [H1, H2, G1, G2, b1, b2] = ComDyn(x01,z01,vx01, vz01, x02, z02, vx02, vz02, u1_01, u2_01, u1_02, u2_02, sigma2, Sigma2, step, m, rho, CD, Sx, Sz, g);
@@ -129,8 +128,7 @@ for Index = 1:Max_iter
         %---Linearized dynamics
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
         
-        J = J + (1/1e9*step*(sigma2*(u1_01^2 + u2_01^2)+sigma2*((U(1,i)^2+U(2,i)^2)-(u1_01^2 + u2_01^2))+(u1_01^2 + u2_01^2)*(Sigma2-sigma2)));
-        %J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
+        J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
@@ -156,9 +154,10 @@ for Index = 1:Max_iter
     %---Control constraints
     for j = 1:N-1
         Cons = Cons + [ U(2,j)*tan(-thetamax) <= U(1,j) <= U(2,j)*tan(thetamax) ];
-        %Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
+        Cons = Cons + [ 0 <= U(3,j) <= Tmax^2 ];
         %Cons = Cons + [ U(3,j) == Tmax^2 ];
-        Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= Tmax^2 ];
+        Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= U(3,j) ];
+       % J = J + abs(U(1,j)^2 + U(2,j)^2 - U(3,j));
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
     Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
@@ -209,11 +208,12 @@ for Index = 1:Max_iter
     vz_opt = value(X(4,:))';
     u1_opt = value(U(1,:))';
     u2_opt = value(U(2,:))';
+    u3_opt = value(U(3,:))';
     sigma_opt = value(Sigma)';
     sigma2_opt = value(Sigma2)';
     
     State_all(:,Index+1) = [x_opt; z_opt; vx_opt; vz_opt];
-    Control_all(:,Index) = [u1_opt; u2_opt];
+    Control_all(:,Index) = [u1_opt; u2_opt; u3_opt];
     Sigma_all(:,Index+1) = sigma_opt;
     Sigma2_all(:,Index+1) = sigma2_opt;
     
@@ -250,7 +250,7 @@ for Index = 1:Max_iter
         sigma2 = sigma2_opt;
         u1 = u1_opt;
         u2 = u2_opt;
-        
+        u3 = u3_opt;
     end
 end
 
@@ -308,7 +308,7 @@ vx    = value(X(3,:))';
 vz    = value(X(4,:))';
 u1    = value(U(1,:))';
 u2    = value(U(2,:))';
-%u3    = value(U(3,:))';
+u3    = value(U(3,:))';
 % 
 % % z vs. x
 figure
@@ -342,9 +342,9 @@ ylabel('Speed (m/s)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% % T
+% T
 figure
-plot(x(1:N-1),sqrt((u1(1:N-1).^2)+u2(1:N-1).^2),'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x(1:N-1),sqrt(u3(1:N-1)),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
 ylabel('Thrust (N)', 'FontSize', 18);
 set(gca,'FontSize',16);
@@ -358,14 +358,28 @@ ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% % u1^2+u2^2-u3
-% figure
-% plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
-% xlabel('Along-Track Distance (m)', 'FontSize', 18);
-% ylabel('u1^2+u2^2-u3', 'FontSize', 18);
-% set(gca,'FontSize',16);
-% grid on
+% u1^2+u2^2-u3
+figure
+plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+xlabel('Along-Track Distance (m)', 'FontSize', 18);
+ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+set(gca,'FontSize',16);
+grid on
 
+
+% u1^2+u2^2-u3
+% % figure
+% % plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+% % xlabel('Along-Track Distance (m)', 'FontSize', 18);
+% % ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+% % set(gca,'FontSize',16);
+% % grid on
+figure
+plot(x(1:N-1),sqrt(u1(1:N-1).^2+u2(1:N-1).^2)-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+xlabel('Along-Track Distance (m)', 'FontSize', 18);
+ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+set(gca,'FontSize',16);
+grid on
 %% cold to warm
 Colors = zeros(Index,3);
 Colors(:,1) = linspace(0,1,Index);
@@ -380,7 +394,7 @@ vx_all    = zeros(N,Index+1);
 vz_all    = zeros(N,Index+1);
 u1_all    = zeros(N,Index);
 u2_all    = zeros(N,Index);
-%u3_all    = zeros(N,Index);
+u3_all    = zeros(N,Index);
 for i = 1:Index+1
     x_all(:,i)     = State_all(1:N,i);
     z_all(:,i)     = State_all(N+1:2*N,i);
@@ -390,7 +404,7 @@ end
 for i = 1:Index
     u1_all(:,i)    = Control_all(1:N,i);
     u2_all(:,i)    = Control_all(N+1:2*N,i);
-    %u3_all(:,i)    = Control_all(2*N+1:3*N,i);
+    u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
 tau = linspace(0,1,col_points+col_points2)';
@@ -466,17 +480,17 @@ ylabel('Vertical control component (N)','FontSize',18)
 set(gca,'Fontsize',16)
 grid on
 
-% % u3 ~ t
-% figure
-% for i = 1:Index
-%     plot(tau(1:N-1)/60, u3_all(1:N-1,i), 'Color', Colors(i,:), 'linewidth', 1.5)
-%     hold on
-% end
-% plot(tau(1:N-1)/60, u3_all(1:N-1,end), 'r', 'linewidth', 1.5)
-% xlabel('Time (min)','FontSize',18)
-% ylabel('Net thrust (N)','FontSize',18)
-% set(gca,'Fontsize',16)
-% grid on
+% u3 ~ t
+figure
+for i = 1:Index
+    plot(tau(1:N-1)/60, u3_all(1:N-1,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+    hold on
+end
+plot(tau(1:N-1)/60, u3_all(1:N-1,end), 'r', 'linewidth', 1.5)
+xlabel('Time (min)','FontSize',18)
+ylabel('Net thrust (N)','FontSize',18)
+set(gca,'Fontsize',16)
+grid on
 
 % theta ~ t
 figure
@@ -500,23 +514,23 @@ grid on
 
 CPU_time = sum(CPU_time)
 
-% % %% Save the results to compare with SCP
-tau = linspace(0,1,col_points)';
-t1 = value(Sigma)*tau;
-t2 = value(Sigma2)*tau1;
-t2 = value(Sigma)+t2;
-t = [t1;t2];
-
-
-tS     = t;
-xS     = x;
-zS     = z;
-vxS    = vx;
-vzS    = vz;
-u1S    = u1;
-u2S    = u2;
-TS     = sqrt((u1(1:N).^2)+u2(1:N).^2);
-thetaS = asin(u1./TS)*180/pi;
-save data_scp_2new.mat tS xS zS vxS vzS u1S u2S TS thetaS
+%% Save the results to compare with SCP
+% % % tau = linspace(0,1,col_points)';
+% % % t1 = value(Sigma)*tau;
+% % % t2 = value(Sigma2)*tau1;
+% % % t2 = value(Sigma)+t2;
+% % % t = [t1;t2];
+% % % 
+% % % 
+% % % tS     = t;
+% % % xS     = x;
+% % % zS     = z;
+% % % vxS    = vx;
+% % % vzS    = vz;
+% % % u1S    = u1;
+% % % u2S    = u2;
+% % % u3S    = u3;
+% % % TS     = u3;
+% % % thetaS = asin(u1./u3)*180/pi;
 % % % save data_scp_2.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 
