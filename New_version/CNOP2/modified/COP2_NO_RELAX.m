@@ -189,9 +189,9 @@ for Index = 1:Max_iter
     %------------------------- Solve the problem --------------------------
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
-     %options = sdpsettings('verbose',0,'solver','mosek');
+     options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
-     options = sdpsettings('verbose',0,'solver','ecos');
+     %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
      %options = sdpsettings('verbose',0,'solver','sdpt3');
     
@@ -305,7 +305,7 @@ vx    = value(X(3,:))';
 vz    = value(X(4,:))';
 u1    = value(U(1,:))';
 u2    = value(U(2,:))';
-u3    = value(U(3,:))';
+%u3    = value(U(3,:))';
 % 
 % % z vs. x
 figure
@@ -339,9 +339,9 @@ ylabel('Speed (m/s)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% T
+% % T
 figure
-plot(x(1:N-1),sqrt(u3(1:N-1)),'-o', 'markersize', 7, 'linewidth', 1.5);
+plot(x(1:N-1),sqrt((u1(1:N-1).^2)+u2(1:N-1).^2),'-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Along-Track Distance (m)', 'FontSize', 18);
 ylabel('Thrust (N)', 'FontSize', 18);
 set(gca,'FontSize',16);
@@ -355,13 +355,13 @@ ylabel('Theta (deg)', 'FontSize', 18);
 set(gca,'FontSize',16);
 grid on
 
-% u1^2+u2^2-u3
-figure
-plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('u1^2+u2^2-u3', 'FontSize', 18);
-set(gca,'FontSize',16);
-grid on
+% % u1^2+u2^2-u3
+% figure
+% plot(x(1:N-1),u1(1:N-1).^2+u2(1:N-1).^2-u3(1:N-1),'-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Along-Track Distance (m)', 'FontSize', 18);
+% ylabel('u1^2+u2^2-u3', 'FontSize', 18);
+% set(gca,'FontSize',16);
+% grid on
 
 %% cold to warm
 Colors = zeros(Index,3);
@@ -377,7 +377,7 @@ vx_all    = zeros(N,Index+1);
 vz_all    = zeros(N,Index+1);
 u1_all    = zeros(N,Index);
 u2_all    = zeros(N,Index);
-u3_all    = zeros(N,Index);
+%u3_all    = zeros(N,Index);
 for i = 1:Index+1
     x_all(:,i)     = State_all(1:N,i);
     z_all(:,i)     = State_all(N+1:2*N,i);
@@ -387,7 +387,7 @@ end
 for i = 1:Index
     u1_all(:,i)    = Control_all(1:N,i);
     u2_all(:,i)    = Control_all(N+1:2*N,i);
-    u3_all(:,i)    = Control_all(2*N+1:3*N,i);
+    %u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
 tau = linspace(0,1,col_points+col_points2)';
@@ -463,17 +463,17 @@ ylabel('Vertical control component (N)','FontSize',18)
 set(gca,'Fontsize',16)
 grid on
 
-% u3 ~ t
-figure
-for i = 1:Index
-    plot(tau(1:N-1)/60, u3_all(1:N-1,i), 'Color', Colors(i,:), 'linewidth', 1.5)
-    hold on
-end
-plot(tau(1:N-1)/60, u3_all(1:N-1,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Net thrust (N)','FontSize',18)
-set(gca,'Fontsize',16)
-grid on
+% % u3 ~ t
+% figure
+% for i = 1:Index
+%     plot(tau(1:N-1)/60, u3_all(1:N-1,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+%     hold on
+% end
+% plot(tau(1:N-1)/60, u3_all(1:N-1,end), 'r', 'linewidth', 1.5)
+% xlabel('Time (min)','FontSize',18)
+% ylabel('Net thrust (N)','FontSize',18)
+% set(gca,'Fontsize',16)
+% grid on
 
 % theta ~ t
 figure
@@ -497,23 +497,22 @@ grid on
 
 CPU_time = sum(CPU_time)
 
-%% Save the results to compare with SCP
-% % % tau = linspace(0,1,col_points)';
-% % % t1 = value(Sigma)*tau;
-% % % t2 = value(Sigma2)*tau1;
-% % % t2 = value(Sigma)+t2;
-% % % t = [t1;t2];
-% % % 
-% % % 
-% % % tS     = t;
-% % % xS     = x;
-% % % zS     = z;
-% % % vxS    = vx;
-% % % vzS    = vz;
-% % % u1S    = u1;
-% % % u2S    = u2;
-% % % u3S    = u3;
-% % % TS     = u3;
-% % % thetaS = asin(u1./u3)*180/pi;
-% % % save data_scp.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
+% % %% Save the results to compare with SCP
+tau = linspace(0,1,col_points)';
+t1 = value(Sigma)*tau;
+t2 = value(Sigma2)*tau1;
+t2 = value(Sigma)+t2;
+t = [t1;t2];
+
+
+tS     = t;
+xS     = x;
+zS     = z;
+vxS    = vx;
+vzS    = vz;
+u1S    = u1;
+u2S    = u2;
+TS     = sqrt((u1(1:N).^2)+u2(1:N).^2);
+thetaS = asin(u1./TS)*180/pi;
+save data_scp_new.mat tS xS zS vxS vzS u1S u2S TS thetaS
 
