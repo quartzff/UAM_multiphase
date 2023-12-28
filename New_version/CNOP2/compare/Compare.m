@@ -9,7 +9,7 @@ format short
 % parameters
 
 load data_gpops.mat
-load data_scp.mat
+load data_scp_new.mat
 
 tG = tG/60;
 tS = tS/60;
@@ -103,7 +103,7 @@ grid on
 figure
 plot(tG, TG, 'k-*', 'markersize', 7, 'linewidth', 1.5);
 hold on
-plot(tS, sqrt(TS), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+plot(tS, TS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Net thrust (N)', 'FontSize', 18);
 leg = legend('GPOPS', 'SCP');
