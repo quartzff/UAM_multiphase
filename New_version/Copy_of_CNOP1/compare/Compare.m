@@ -9,7 +9,7 @@ format short
 % parameters
 
 load data_gpops.mat
-load data_scp_2.mat
+load data_scp_2new.mat
 
 tG = tG/60;
 tS = tS/60;
@@ -165,7 +165,7 @@ grid on
 h = figure;
 plot(tG, TG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
-plot(tS, sqrt(TS), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+plot(tS, TS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 20);
 ylabel('Net thrust (N)', 'FontSize', 20);
 xlim([0 25]);
@@ -183,7 +183,7 @@ print(h,'conop1_thrust','-dpdf','-r0')
 figure
 plot(tG(105 :156), TG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
-plot(tS(99:150), sqrt(TS((99:150))), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+plot(tS(99:150), TS((99:150)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
 xlabel('Time (min)', 'FontSize', 18);
 ylabel('Net thrust (N)', 'FontSize', 18);
 leg = legend('GPOPS', 'SCP');
