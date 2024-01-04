@@ -24,7 +24,7 @@ z0 = 500;       % initial altitude, m
 vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
-x1 = 10000;         % phase 1 along-track distance, m
+x1 = 20000;         % phase 1 along-track distance, m
 z1 = 500;       % phase 1 altitude, m
 vx1 = 0;    % phase 1 along-track airspeed, m/s
 vz1 = 0;        % phase 1 vertical airspeed, m/s
@@ -34,7 +34,7 @@ zf = 0;         % final altitude, m
 vxf = 0;        % final along-track airspeed, m/s
 vzf = 0;        % final vertical airspeed, m/s
 
-vmax   = 27.78;    % maximum airspeed
+vmax   = 17;    % maximum airspeed
 Tmin   = 0;      % minimum net thrust
 Tmax   = 4800;   % maximum net thrust, N
 thetamin = -6*pi/180;    % minimum rotor tip-path-plane pitch angle
@@ -54,14 +54,14 @@ tf = 25*60;     % required time of arrival (RTA), min
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 25;   % Maximum number of iteration
 col_points = 30;
-col_points2 = 30;
+col_points2 = 70;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
 N = length(tau)+length(tau1);   % N nodes
-sigma_guess = 730; 
+sigma_guess = 24*60; 
 
-sigma2_guess = 1500-730;
+sigma2_guess = 3*60;
 
 x1 = linspace(x0,x1,col_points)';
 z1 = linspace(z0,z1,col_points)';
@@ -96,7 +96,7 @@ sigma = sigma_guess;
 sigma2 = sigma2_guess;
 u1 = zeros(N,1)*210;
 u2 = zeros(N,1)*2300;
-%u3 = ones(N,1)*2300^2;
+
 
 %--------------------------- Iteration procedure --------------------------
 for Index = 1:Max_iter
@@ -120,6 +120,7 @@ for Index = 1:Max_iter
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
 %         X(:,i+1) = inv(H2) * (H1*X(:,i) + G1*U(:,i) + G2*U(:,i+1) + 0.5*step*(b1+b2));
         J = J + (1/1e9*step*(sigma*(u1_01^2 + u2_01^2)+sigma*((U(1,i)^2+U(2,i)^2)-(u1_01^2 + u2_01^2))+(u1_01^2 + u2_01^2)*(Sigma-sigma)));
+                
         
         else 
         [H1, H2, G1, G2, b1, b2] = ComDyn(x01,z01,vx01, vz01, x02, z02, vx02, vz02, u1_01, u2_01, u1_02, u2_02, sigma2, Sigma2, step, m, rho, CD, Sx, Sz, g);
@@ -129,18 +130,20 @@ for Index = 1:Max_iter
         Cons = Cons + [ -H1*X(:,i) + H2*X(:,i+1) - G1*U(:,i) - G2*U(:,i+1) == 0.5*step*(b1+b2) ];  % N
         
         J = J + (1/1e9*step*(sigma2*(u1_01^2 + u2_01^2)+sigma2*((U(1,i)^2+U(2,i)^2)-(u1_01^2 + u2_01^2))+(u1_01^2 + u2_01^2)*(Sigma2-sigma2)));
+        %J = J + (1/1e9*step*(sigma2*u3_01+sigma2*(U(3,i)-u3_01)+u3_01*(Sigma2-sigma2)));
         end
         %---State constraints
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
-        Cons = Cons + [ X(1, phase_node) == 10000 ];
+        Cons = Cons + [ X(1, phase_node) == 20000 ];
         Cons = Cons + [ X(2, phase_node) == z0 ];
-        Cons = Cons + [ X(1, phase_node +1) == 10000 ];
+        Cons = Cons + [ X(1, phase_node +1) == 20000 ];
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
-%         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
+        %Cons = Cons + [ u1_01^2 + u2_01^2 == U(3,i+1) ];
+        %Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
         %---Objective
         %J = J + 1/1e9*step*1/2*U(3,i)^2;
@@ -158,8 +161,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= Tmax^2 ];
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
-    Cons = Cons + [ 700 <= Sigma <= 750 ];% added time constraint
-    Cons = Cons + [ 700 <= Sigma2 <= 790 ];% added time constraint
+    Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
+    Cons = Cons + [ 30 <= Sigma2 <= 1000 ];% added time constraint
     %Cons = Cons + [ Sigma == 733.8 ];
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -188,8 +191,8 @@ for Index = 1:Max_iter
     
     %------------------------- Solve the problem --------------------------
     tic
-     %options = sdpsettings('verbose',0,'solver','sedumi');
-     options = sdpsettings('verbose',0,'solver','mosek');
+     %、options = sdpsettings('verbose',0,'solver','sedumi');
+     %options = sdpsettings('verbose',0,'solver','mosek');
      %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
      %options = sdpsettings('verbose',0,'solver','ecos');
     %options = sdpsettings('verbose',0,'solver','quadprogbb');
@@ -206,7 +209,6 @@ for Index = 1:Max_iter
     vz_opt = value(X(4,:))';
     u1_opt = value(U(1,:))';
     u2_opt = value(U(2,:))';
-    
     sigma_opt = value(Sigma)';
     sigma2_opt = value(Sigma2)';
     
@@ -235,7 +237,8 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
+    converge = 9e-1;
+    if (del(1) <= converge) && (del(2) <= converge) && (del(3) <= converge)&& (del(4) <= converge)&& (del(5) <= converge)&& (del(6) <= converge)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -247,7 +250,7 @@ for Index = 1:Max_iter
         sigma2 = sigma2_opt;
         u1 = u1_opt;
         u2 = u2_opt;
-
+        
     end
 end
 
@@ -390,7 +393,7 @@ for i = 1:Index
     %u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,col_points+col_points2)'*;
+tau = linspace(0,1,col_points+col_points2)';
 % x ~ t
 figure
 for i = 1:Index
@@ -514,5 +517,6 @@ u1S    = u1;
 u2S    = u2;
 TS     = sqrt((u1(1:N).^2)+u2(1:N).^2);
 thetaS = asin(u1./TS)*180/pi;
-save data_scp_new.mat tS xS zS vxS vzS u1S u2S TS thetaS
+save data_scp_2new.mat tS xS zS vxS vzS u1S u2S TS thetaS
+% % % save data_scp_2.mat tS xS zS vxS vzS u1S u2S u3S TS thetaS
 

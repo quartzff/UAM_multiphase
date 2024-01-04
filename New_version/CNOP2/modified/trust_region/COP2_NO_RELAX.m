@@ -163,8 +163,9 @@ for Index = 1:Max_iter
     %Cons = Cons + [ Sigma == 733.8 ];
     %---Trust-region constraint
     % |X-Xk|<delta
+    rad = 0.8;
     Xk = [x'; z'; vx'; vz']; % X_k-1
-    delta = [2e3*ones(1,N); 5e2*ones(1,N); 50*ones(1,N); 50*ones(1,N)];
+    delta = [2000*rad*ones(1,N); 500*rad*ones(1,N); 30*rad*ones(1,N); 10*rad*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
     
@@ -190,10 +191,6 @@ for Index = 1:Max_iter
     tic
      %options = sdpsettings('verbose',0,'solver','sedumi');
      options = sdpsettings('verbose',0,'solver','mosek');
-     %options = sdpsettings('verbose',0,'solver','ecos','ecos.maxit',150);
-     %options = sdpsettings('verbose',0,'solver','ecos');
-    %options = sdpsettings('verbose',0,'solver','quadprogbb');
-     %options = sdpsettings('verbose',0,'solver','sdpt3');
     
     sol = optimize(Cons, Objective, options);
     sol.info
@@ -255,42 +252,42 @@ end
 %                            Outputs & Plots                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure
-plot(Conv_I,Conv_x, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta x (m)','FontSize',18)
-set(gca,'FontSize',16)
+plot(Conv_I,Conv_x, '-o', 'markersize', 10, 'linewidth', 2)
+xlabel('Iteration number','FontSize',28)
+ylabel('\Delta x (m)','FontSize',28)
+set(gca,'FontSize',28)
 % axis([1 14 0 6e9])
 grid on
 
 figure
-plot(Conv_I,Conv_z, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta z (m)','FontSize',18)
-set(gca,'FontSize',16)
+plot(Conv_I,Conv_z, '-o', 'markersize', 10, 'linewidth', 2)
+xlabel('Iteration number','FontSize',28)
+ylabel('\Delta z (m)','FontSize',28)
+set(gca,'FontSize',28)
 % axis([1 14 0 6e9])
 grid on
 
 figure
-plot(Conv_I,Conv_vx, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta v_x (m/s)','FontSize',18)
-set(gca,'FontSize',16)
+plot(Conv_I,Conv_vx, '-o', 'markersize', 10, 'linewidth', 2)
+xlabel('Iteration number','FontSize',28)
+ylabel('\Delta v_x (m/s)','FontSize',28)
+set(gca,'FontSize',28)
 % axis([1 14 0 6e9])
 grid on
 
 figure
 plot(Conv_I,Conv_vz, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('\Delta v_z (m/s)','FontSize',18)
-set(gca,'FontSize',16)
+xlabel('Iteration number','FontSize',24)
+ylabel('\Delta v_z (m/s)','FontSize',24)
+set(gca,'FontSize',24)
 % axis([1 14 0 6e9])
 grid on
 
 figure
-plot(Conv_I,Obj*1e9, '-o', 'markersize', 7, 'linewidth', 2)
-xlabel('Iteration number','FontSize',18)
-ylabel('Objective value','FontSize',18)
-set(gca,'FontSize',16)
+plot(Conv_I,Obj*1e9, '-o', 'markersize', 10, 'linewidth', 2)
+xlabel('Iteration number','FontSize',28)
+ylabel('Objective value','FontSize',28)
+set(gca,'FontSize',28)
 grid on
 
 % %------------------------------- States -----------------------------------
@@ -310,49 +307,49 @@ u2    = value(U(2,:))';
 % % z vs. x
 figure
 plot(x,z,'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 20);
-ylabel('Altitude (m)', 'FontSize', 20);
-set(gca,'FontSize',18);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Altitude (m)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % vx vs. x
 figure
 plot(x,vx,'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Along-Track Speed (m/s)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Along-Track Speed (m/s)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % vz vs. x
 figure
 plot(x,vz,'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Vertical Speed (m/s)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Vertical Speed (m/s)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % v vs. x
 figure
 plot(x,sqrt(vx.^2+vz.^2),'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Speed (m/s)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Speed (m/s)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % % T
 figure
 plot(x(1:N-1),sqrt((u1(1:N-1).^2)+u2(1:N-1).^2),'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Thrust (N)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Thrust (N)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % theta
 figure
 plot(x(1:N-1),atan(u1(1:N-1)./u2(1:N-1))*180/pi,'-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Along-Track Distance (m)', 'FontSize', 18);
-ylabel('Theta (deg)', 'FontSize', 18);
-set(gca,'FontSize',16);
+xlabel('Along-Track Distance (m)', 'FontSize', 24);
+ylabel('Theta (deg)', 'FontSize', 24);
+set(gca,'FontSize',24);
 grid on
 
 % % u1^2+u2^2-u3
@@ -390,29 +387,29 @@ for i = 1:Index
     %u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau = linspace(0,1,col_points+col_points2)'*;
+tau = linspace(0,1,col_points+col_points2)';
 % x ~ t
 figure
 for i = 1:Index
-    plot(tau/60, x_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+    plot(tau*1500/60, x_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
     hold on
 end
 plot(tau/60, x_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Along-track distance (m)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Time (min)','FontSize',28)
+ylabel('Along-track distance (m)','FontSize',28)
+set(gca,'Fontsize',28)
 grid on
 
 % z ~ t
 figure
 for i = 1:Index
-    plot(tau/60, z_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+    plot(tau*1500/60, z_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
     hold on
 end
-plot(tau/60, z_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Altitude (m)','FontSize',18)
-set(gca,'Fontsize',16)
+plot(tau*1500/60, z_all(:,end), 'r', 'linewidth', 1.5)
+xlabel('Time (min)','FontSize',28)
+ylabel('Altitude (m)','FontSize',28)
+set(gca,'Fontsize',28)
 grid on
 
 % vx ~ t
@@ -422,9 +419,9 @@ for i = 1:Index
     hold on
 end
 plot(tau/60, vx_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Along-track airspeed (m/s)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Time (min)','FontSize',24)
+ylabel('Along-track airspeed (m/s)','FontSize',24)
+set(gca,'Fontsize',24)
 grid on
 
 % vx ~ t
@@ -482,17 +479,17 @@ for i = 1:Index
     hold on
 end
 plot(tau(1:N-1)/60, asin(u1_all(1:N-1,i)./u2_all(1:N-1,i))*180/pi, 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Pitch angle (deg)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Time (min)','FontSize',24)
+ylabel('Pitch angle (deg)','FontSize',24)
+set(gca,'Fontsize',24)
 grid on
 
 %% CPU time
 figure
 bar(CPU_time)
-xlabel('Iteration number','FontSize',18)
-ylabel('CPU time (s)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Iteration number','FontSize',24)
+ylabel('CPU time (s)','FontSize',24)
+set(gca,'Fontsize',24)
 grid on
 
 CPU_time = sum(CPU_time)
