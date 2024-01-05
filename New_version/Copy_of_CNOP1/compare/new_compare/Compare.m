@@ -9,26 +9,27 @@ format short
 % parameters
 
 load data_gpops.mat
-load data_scp_new.mat
-
+%load data_scp_2.mat
+%load data_scp_new.mat
+load data_scp_new2.mat
 tG = tG/60;
 tS = tS/60;
 thetaS = atan(u1S./u2S)*180/pi;
-% x vs. t
-figure
-plot(tG, xG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
-hold on
-plot(tS, xS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 24);
-ylabel('Along-track distance (m)', 'FontSize', 24);
-xlim([0 25]);
-leg = legend('GPOPS', 'SCP');
-legend('Location','southwest')
-set(leg,'FontSize',24);
-set(gca,'FontSize',24);
-set(gcf,'PaperUnits','inches');
-set(gcf,'PaperSize',[8.5 7.5]);
-grid on
+% % x vs. t
+% figure
+% plot(tG, xG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
+% hold on
+% plot(tS, xS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 24);
+% ylabel('Along-track distance (m)', 'FontSize', 24);
+% xlim([0 25]);
+% leg = legend('GPOPS', 'SCP');
+% legend('Location','southwest')
+% set(leg,'FontSize',24);
+% set(gca,'FontSize',24);
+% set(gcf,'PaperUnits','inches');
+% set(gcf,'PaperSize',[8.5 7.5]);
+% grid on
 
 %z vs. t
 % figure
@@ -47,14 +48,14 @@ h = figure;
 plot(tG, zG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, zS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Altitude (m)', 'FontSize', 18);
+xlabel('Time (min)', 'FontSize', 16);
+ylabel('Altitude (m)', 'FontSize', 16);
 xlim([0 25]);
 ylim([0 600]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
-set(leg,'FontSize',18);
-set(gca,'FontSize',18);
+set(leg,'FontSize',16);
+set(gca,'FontSize',16);
 grid on
 set(h,'Units','Inches');
 pos = get(h,'Position');
@@ -63,126 +64,130 @@ print(h,'conop1_altitude','-dpdf','-r0')
 
 
 
-% vx vs. t
-h = figure;
-plot(tG, vxG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS, vxS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Along-track airspeed (m/s)', 'FontSize', 24);
-xlim([0 25]);
-leg = legend('GPOPS', 'SCP');
-legend('Location','southwest')
-set(leg,'FontSize',18);
-set(gca,'FontSize',18);
-grid on
-set(h,'Units','Inches');
-pos = get(h,'Position');
-set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(h,'conop1_alongspeed','-dpdf','-r0')
-
-figure
-plot(tG(90 :156), vxG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS(41:100), vxS((41:100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-set(gca,'FontSize',18);
-xlim([23 25]);
-grid on
-% figure
-% plot(tG(105 :156), vxG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
-% hold on
-% plot(tS(99:150), vxS((99:150)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% xlabel('Time (min)', 'FontSize', 18);
-% ylabel('Along-track airspeed (m/s)', 'FontSize', 18);
-% leg = legend('GPOPS', 'SCP');
-% set(leg,'FontSize',16);
-% set(gca,'FontSize',16);
-% grid on
-
-
-% % vz vs. t
+% % vx vs. t
 % h = figure;
-% plot(tG, vzG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% plot(tG, vxG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
 % hold on
-% plot(tS, vzS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% xlabel('Time (min)', 'FontSize', 18);
-% ylabel('Vertical airspeed (m/s)', 'FontSize', 18);
+% plot(tS, vxS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 16);
+% ylabel('Along-track airspeed (m/s)', 'FontSize', 16);
 % xlim([0 25]);
 % leg = legend('GPOPS', 'SCP');
 % legend('Location','southwest')
-% set(leg,'FontSize',18);
-% set(gca,'FontSize',18);
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% set(gca, 'linewidth', 2);
+% grid on
+% set(h,'Units','Inches');
+% pos = get(h,'Position');
+% set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+% print(h,'conop1_alongspeed','-dpdf','-r0')
+% 
+% figure
+% plot(tG(90 :156), vxG(90 :156), 'k-x', 'markersize', 17, 'linewidth', 3);
+% hold on
+% plot(tS(41:100), vxS((41:100)), 'r-o', 'markersize', 12, 'linewidth', 3);
+% set(gca,'FontSize',26);
+% xlim([23 25]);
+% set(gca, 'linewidth', 3);
+% grid on
+% % figure
+% % plot(tG(105 :156), vxG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% % hold on
+% % plot(tS(99:150), vxS((99:150)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% % xlabel('Time (min)', 'FontSize', 18);
+% % ylabel('Along-track airspeed (m/s)', 'FontSize', 18);
+% % leg = legend('GPOPS', 'SCP');
+% % set(leg,'FontSize',16);
+% % set(gca,'FontSize',16);
+% % grid on
+% 
+% 
+% % vz vs. t
+% h = figure;
+% plot(tG, vzG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
+% hold on
+% plot(tS, vzS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 16);
+% ylabel('Vertical airspeed (m/s)', 'FontSize', 16);
+% xlim([0 25]);
+% leg = legend('GPOPS', 'SCP');
+% legend('Location','southwest')
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% set(gca, 'linewidth', 2);
 % grid on
 % set(h,'Units','Inches');
 % pos = get(h,'Position');
 % set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 % print(h,'conop1_verticalspeed','-dpdf','-r0')
 % 
-
-
-
-figure
-plot(tG(90 :156), vzG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS(46:100), vzS((46:100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-set(gca,'FontSize',26);
-current_xlim = xlim;
-% Set the new x-axis limits, keeping the current start point
-xlim([current_xlim(1), 25]);
-% Make the plot border bold
-set(gca, 'linewidth', 2);
-grid on
-
-% % % u1 vs. t
-% % figure
-% % 
-% % plot(tG, u1G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
-% % hold on
-% % plot(tS, u1S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% % xlabel('Time (min)', 'FontSize', 18);
-% % ylabel('u_1 (N)', 'FontSize', 18);
-% % leg = legend('GPOPS', 'SCP');
-% % set(leg,'FontSize',16);
-% % set(gca,'FontSize',16);
-% % grid on
-
-% % % u2 vs. t
-% % figure
-% % plot(tG, u2G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
-% % hold on
-% % plot(tS, u2S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% % xlabel('Time (min)', 'FontSize', 18);
-% % ylabel('u_2 (N)', 'FontSize', 18);
-% % leg = legend('GPOPS', 'SCP');
-% % set(leg,'FontSize',16);
-% % set(gca,'FontSize',16);
-% % grid on
-
-% % % u3 vs. t
-% % figure
-% % plot(tG, u3G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
-% % hold on
-% % plot(tS, u3S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% % xlabel('Time (min)', 'FontSize', 18);
-% % ylabel('u_3 (N)', 'FontSize', 18);
-% % leg = legend('GPOPS', 'SCP');
-% % set(leg,'FontSize',16);
-% % set(gca,'FontSize',16);
-% % grid on
-
+% 
+% 
+% 
+% figure
+% plot(tG(90 :156), vzG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 3);
+% hold on
+% plot(tS(46:100), vzS((46:100)), 'r-o', 'markersize', 7, 'linewidth', 3);
+% set(gca,'FontSize',26);
+% current_xlim = xlim;
+% % Set the new x-axis limits, keeping the current start point
+% xlim([23, 25]);
+% % Make the plot border bold
+% set(gca, 'linewidth', 3);
+% grid on
+% 
+% % % % u1 vs. t
+% % % figure
+% % % 
+% % % plot(tG, u1G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
+% % % hold on
+% % % plot(tS, u1S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% % % xlabel('Time (min)', 'FontSize', 18);
+% % % ylabel('u_1 (N)', 'FontSize', 18);
+% % % leg = legend('GPOPS', 'SCP');
+% % % set(leg,'FontSize',16);
+% % % set(gca,'FontSize',16);
+% % % grid on
+% 
+% % % % u2 vs. t
+% % % figure
+% % % plot(tG, u2G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
+% % % hold on
+% % % plot(tS, u2S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% % % xlabel('Time (min)', 'FontSize', 18);
+% % % ylabel('u_2 (N)', 'FontSize', 18);
+% % % leg = legend('GPOPS', 'SCP');
+% % % set(leg,'FontSize',16);
+% % % set(gca,'FontSize',16);
+% % % grid on
+% 
+% % % % u3 vs. t
+% % % figure
+% % % plot(tG, u3G, 'k-*', 'markersize', 7, 'linewidth', 1.5);
+% % % hold on
+% % % plot(tS, u3S, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% % % xlabel('Time (min)', 'FontSize', 18);
+% % % ylabel('u_3 (N)', 'FontSize', 18);
+% % % leg = legend('GPOPS', 'SCP');
+% % % set(leg,'FontSize',16);
+% % % set(gca,'FontSize',16);
+% % % grid on
+% 
 % % T vs. t
 % h = figure;
-% plot(tG, TG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% plot(tG, TG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
 % hold on
 % plot(tS, TS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% xlabel('Time (min)', 'FontSize', 18);
-% ylabel('Net thrust (N)', 'FontSize', 18);
+% xlabel('Time (min)', 'FontSize', 16);
+% ylabel('Net thrust (N)', 'FontSize', 16);
 % xlim([0 25]);
 % ylim([0 5000])
 % leg = legend('GPOPS', 'SCP');
 % legend('Location','southwest')
-% set(leg,'FontSize',18);
-% set(gca,'FontSize',18);
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% set(gca, 'linewidth', 2);
 % grid on
 % set(h,'Units','Inches');
 % pos = get(h,'Position');
@@ -191,27 +196,29 @@ grid on
 % 
 % % T vs. t
 % figure
-% plot(tG(90 :156), TG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% plot(tG(90 :156), TG(90 :156), 'k-x', 'markersize', 7, 'linewidth', 3);
 % hold on
-% plot(tS(41 :100), TS((41 :100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% plot(tS(46 :100), TS((46 :100)), 'r-o', 'markersize', 7, 'linewidth', 3);
 % xlim([23 25])
 % ylim([0 5000])
 % 
-% set(gca,'FontSize',18);
+% set(gca,'FontSize',26);
+% set(gca, 'linewidth', 3);
 % grid on
 
 % % Theta vs. t
 % h = figure;
-% plot(tG, thetaG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% plot(tG, thetaG, 'k-x', 'markersize', 10, 'linewidth', 1.5);
 % hold on
 % plot(tS, thetaS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-% xlabel('Time (min)', 'FontSize', 18);
-% ylabel('Pitch angle (deg)', 'FontSize', 18);
+% xlabel('Time (min)', 'FontSize', 16);
+% ylabel('Pitch angle (deg)', 'FontSize', 16);
 % xlim([0 25]);
 % leg = legend('GPOPS', 'SCP');
 % legend('Location','southwest')
-% set(leg,'FontSize',18);
-% set(gca,'FontSize',18);
+% set(leg,'FontSize',16);
+% set(gca,'FontSize',16);
+% set(gca, 'linewidth', 2);
 % %legend('on');
 % grid on
 % set(h,'Units','Inches');
@@ -223,10 +230,11 @@ grid on
 % figure
 % plot(tG(90 :156), thetaG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
 % hold on
-% plot(tS(41 :100), thetaS(41:100), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% plot(tS(46 :100), thetaS(46:100), 'r-o', 'markersize', 7, 'linewidth', 1.5);
 % % Removed x and y labels
 % % Increased fontsize for axis ticks
-% set(gca,'FontSize',18);
+% set(gca,'FontSize',26);
+% set(gca, 'linewidth', 3);
 % xlim([23 25])
 % % Removed the legend
 % legend('off');

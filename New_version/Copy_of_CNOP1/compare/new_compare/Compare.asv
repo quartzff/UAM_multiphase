@@ -9,8 +9,9 @@ format short
 % parameters
 
 load data_gpops.mat
-load data_scp_new.mat
-
+load data_scp.mat
+%load data_scp_new.mat
+%load data_scp_new2.mat
 tG = tG/60;
 tS = tS/60;
 thetaS = atan(u1S./u2S)*180/pi;
@@ -47,14 +48,14 @@ h = figure;
 plot(tG, zG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, zS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 24);
-ylabel('Altitude (m)', 'FontSize', 24);
+xlabel('Time (min)', 'FontSize', 18);
+ylabel('Altitude (m)', 'FontSize', 18);
 xlim([0 25]);
 ylim([0 600]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
-set(leg,'FontSize',24);
-set(gca,'FontSize',24);
+set(leg,'FontSize',18);
+set(gca,'FontSize',18);
 grid on
 set(h,'Units','Inches');
 pos = get(h,'Position');
@@ -68,20 +69,27 @@ h = figure;
 plot(tG, vxG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, vxS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 24);
-ylabel('Along-track airspeed (m/s)', 'FontSize', 24);
+xlabel('Time (min)', 'FontSize', 16);
+ylabel('Along-track airspeed (m/s)', 'FontSize', 16);
 xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
-set(leg,'FontSize',24);
-set(gca,'FontSize',24);
+set(leg,'FontSize',16);
+set(gca,'FontSize',16);
 grid on
 set(h,'Units','Inches');
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 print(h,'conop1_alongspeed','-dpdf','-r0')
 
-
+figure
+plot(tG(90 :156), vxG(90 :156), 'k-x', 'markersize', 17, 'linewidth', 3);
+hold on
+plot(tS(41:100), vxS((41:100)), 'r-o', 'markersize', 12, 'linewidth', 3);
+set(gca,'FontSize',26);
+xlim([23 25]);
+set(gca, 'linewidth', 3);
+grid on
 % figure
 % plot(tG(105 :156), vxG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
 % hold on
@@ -99,30 +107,33 @@ h = figure;
 plot(tG, vzG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
 hold on
 plot(tS, vzS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 24);
-ylabel('Vertical airspeed (m/s)', 'FontSize', 24);
+xlabel('Time (min)', 'FontSize', 16);
+ylabel('Vertical airspeed (m/s)', 'FontSize', 16);
 xlim([0 25]);
 leg = legend('GPOPS', 'SCP');
 legend('Location','southwest')
-set(leg,'FontSize',24);
-set(gca,'FontSize',24);
+set(leg,'FontSize',16);
+set(gca,'FontSize',16);
 grid on
 set(h,'Units','Inches');
 pos = get(h,'Position');
 set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
 print(h,'conop1_verticalspeed','-dpdf','-r0')
 
-figure
-plot(tG(105 :156), vzG(105 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS(49:100), vzS((49:100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 24);
-ylabel('Vertical airspeed (m/s)', 'FontSize', 24);
-leg = legend('GPOPS', 'SCP');
-set(leg,'FontSize',24);
-set(gca,'FontSize',24);
-grid on
 
+
+
+figure
+plot(tG(90 :156), vzG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 3);
+hold on
+plot(tS(46:100), vzS((46:100)), 'r-o', 'markersize', 7, 'linewidth', 3);
+set(gca,'FontSize',26);
+current_xlim = xlim;
+% Set the new x-axis limits, keeping the current start point
+xlim([23, 25]);
+% Make the plot border bold
+set(gca, 'linewidth', 3);
+grid on
 
 % % % u1 vs. t
 % % figure
@@ -161,36 +172,35 @@ grid on
 % % set(gca,'FontSize',16);
 % % grid on
 
-% T vs. t
-h = figure;
-plot(tG, TG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS, TS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
-xlabel('Time (min)', 'FontSize', 18);
-ylabel('Net thrust (N)', 'FontSize', 18);
-xlim([0 25]);
-ylim([0 5000])
-leg = legend('GPOPS', 'SCP');
-legend('Location','southwest')
-set(leg,'FontSize',18);
-set(gca,'FontSize',18);
-grid on
-set(h,'Units','Inches');
-pos = get(h,'Position');
-set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(h,'conop1_thrust','-dpdf','-r0')
-
-% T vs. t
-figure
-plot(tG(90 :156), TG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
-hold on
-plot(tS(41 :100), TS((41 :100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
-leg = legend('GPOPS', 'SCP');
-xlim([23 25])
-ylim([0 5000])
-set(leg,'FontSize',18);
-set(gca,'FontSize',18);
-grid on
+% % T vs. t
+% h = figure;
+% plot(tG, TG, 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% hold on
+% plot(tS, TS, 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlabel('Time (min)', 'FontSize', 18);
+% ylabel('Net thrust (N)', 'FontSize', 18);
+% xlim([0 25]);
+% ylim([0 5000])
+% leg = legend('GPOPS', 'SCP');
+% legend('Location','southwest')
+% set(leg,'FontSize',18);
+% set(gca,'FontSize',18);
+% grid on
+% set(h,'Units','Inches');
+% pos = get(h,'Position');
+% set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+% print(h,'conop1_thrust','-dpdf','-r0')
+% 
+% % T vs. t
+% figure
+% plot(tG(90 :156), TG(90 :156), 'k-x', 'markersize', 15, 'linewidth', 1.5);
+% hold on
+% plot(tS(41 :100), TS((41 :100)), 'r-o', 'markersize', 7, 'linewidth', 1.5);
+% xlim([23 25])
+% ylim([0 5000])
+% 
+% set(gca,'FontSize',18);
+% grid on
 
 % % Theta vs. t
 % h = figure;
