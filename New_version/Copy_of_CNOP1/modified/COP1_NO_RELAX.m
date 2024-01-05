@@ -134,11 +134,12 @@ for Index = 1:Max_iter
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
+        %Cons = Cons + [ -15  <= X(4,i+1) <= 3 ];
         Cons = Cons + [ X(1, phase_node) == 20000 ];
         Cons = Cons + [ X(2, phase_node) == z0 ];
         Cons = Cons + [ X(1, phase_node +1) == 20000 ];
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
-        Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
+        Cons = Cons + [ -15 <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
 %         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
@@ -235,7 +236,8 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 1) && (del(2) <= 1) && (del(3) <= 1)&& (del(4) <= 1)&& (del(5) <= 1)&& (del(6) <= 1)
+    ro = 0.8;
+    if (del(1) <= ro) && (del(2) <= ro) && (del(3) <= ro)&& (del(4) <= ro)&& (del(5) <= ro)&& (del(6) <= ro)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -520,5 +522,5 @@ u1S    = u1;
 u2S    = u2;
 TS     = sqrt((u1(1:N).^2)+u2(1:N).^2);
 thetaS = asin(u1./TS)*180/pi;
-save data_scp_new.mat tS xS zS vxS vzS u1S u2S TS thetaS
+save data_scp_new2.mat tS xS zS vxS vzS u1S u2S TS thetaS
 
