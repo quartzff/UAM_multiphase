@@ -508,7 +508,7 @@ CPU_time = sum(CPU_time)
 % % %% Save the results to compare with SCP
 tau = linspace(0,1,col_points)';
 t1 = value(Sigma)*tau;
-t2 = value(Sigma2)*tau1;
+t2 = value(Sigma2)*tau;
 t2 = value(Sigma)+t2;
 t = [t1;t2];
 
