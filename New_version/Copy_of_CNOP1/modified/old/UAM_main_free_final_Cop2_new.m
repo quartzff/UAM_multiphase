@@ -431,7 +431,11 @@ xlabel('Time (min)','FontSize',18)
 ylabel('Altitude (m)','FontSize',18)
 set(gca,'Fontsize',16)
 grid on
-
+tau1 = linspace(0,1,col_points)' * sigma_opt;
+tau2 = linspace(0,1,col_points2)'* sigma2_opt;
+tau2 = tau2 + tau1(end);
+%tau = linspace(0,1,col_points+col_points2)';
+tau = [tau1;tau2];
 % vx ~ t
 figure
 for i = 1:Index
@@ -439,9 +443,9 @@ for i = 1:Index
     hold on
 end
 plot(tau/60, vx_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',18)
-ylabel('Along-track airspeed (m/s)','FontSize',18)
-set(gca,'Fontsize',16)
+xlabel('Time (min)','FontSize',24)
+ylabel('Along-track airspeed (m/s)','FontSize',24)
+set(gca,'Fontsize',24)
 grid on
 
 % vx ~ t

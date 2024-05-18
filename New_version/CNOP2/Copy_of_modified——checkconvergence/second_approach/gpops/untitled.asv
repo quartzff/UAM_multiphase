@@ -1,0 +1,28 @@
+figure
+
+
+
+boxplot(all_obj,'Whisker', 5)
+set(gca, 'XTickLabel', {});
+xlabel('GPOPS 5% variation', 'FontSize', 18);
+ylabel('Objective value', 'FontSize', 18);
+set(gca,'FontSize',16);
+
+
+% boxplot(integral_values,'Whisker', 5)
+% set(gca, 'XTickLabel', {});
+% xlabel('GPOPS 5% variation', 'FontSize', 18);
+% ylabel('Objective value', 'FontSize', 18);
+% set(gca,'FontSize',16);
+
+
+
+% figure
+% 
+% boxplot(CPU_time,'Whisker', 2)
+% set(gca, 'XTickLabel', {});
+% xlabel('GPOPS 5% variation', 'FontSize', 18);
+% ylabel('Time(s)', 'FontSize', 18);
+% set(gca,'FontSize',16);
+% 
+% 

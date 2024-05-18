@@ -24,7 +24,7 @@ z0 = 500;       % initial altitude, m
 vx0 = 13.85;    % initial along-track airspeed, m/s
 vz0 = 0;        % initial vertical airspeed, m/s
 
-x1 = 20000;         % phase 1 along-track distance, m
+x1 = 10000;         % phase 1 along-track distance, m
 z1 = 500;       % phase 1 altitude, m
 vx1 = 0;    % phase 1 along-track airspeed, m/s
 vz1 = 0;        % phase 1 vertical airspeed, m/s
@@ -53,15 +53,15 @@ tf = 25*60;     % required time of arrival (RTA), min
 %                       Modeling & Optimization                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Max_iter = 25;   % Maximum number of iteration
-col_points = 50;
-col_points2 = 50;
+col_points = 30;
+col_points2 = 30;
 tau = linspace(0,1,col_points)';
 tau1 = linspace(0,1,col_points2)';
 step = tau(2)-tau(1);
 N = length(tau)+length(tau1);   % N nodes
-sigma_guess = 24*60; 
+sigma_guess = 730; 
 
-sigma2_guess = 3*60;
+sigma2_guess = 1500-730;
 
 x1 = linspace(x0,x1,col_points)';
 z1 = linspace(z0,z1,col_points)';
@@ -134,9 +134,9 @@ for Index = 1:Max_iter
         Cons = Cons + [ x0 <= X(1,i+1) <= xf ];
         Cons = Cons + [ zf <= X(2,i+1) <= z0 ];
         Cons = Cons + [ 0  <= X(3,i+1) <= vmax ];
-        Cons = Cons + [ X(1, phase_node) == 20000 ];
+        Cons = Cons + [ X(1, phase_node) == 10000 ];
         Cons = Cons + [ X(2, phase_node) == z0 ];
-        Cons = Cons + [ X(1, phase_node +1) == 20000 ];
+        Cons = Cons + [ X(1, phase_node +1) == 10000 ];
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
         Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
@@ -158,8 +158,8 @@ for Index = 1:Max_iter
         Cons = Cons + [ U(1,j)^2 + U(2,j)^2 <= Tmax^2 ];
     end
     Cons = Cons + [  Sigma + Sigma2 == 1500 ];% added time constraint
-    Cons = Cons + [ 500 <= Sigma <= 1482 ];% added time constraint
-    Cons = Cons + [ 30 <= Sigma2 <= 100 ];% added time constraint
+    Cons = Cons + [ 700 <= Sigma <= 750 ];% added time constraint
+    Cons = Cons + [ 700 <= Sigma2 <= 790 ];% added time constraint
     %Cons = Cons + [ Sigma == 733.8 ];
     %---Trust-region constraint
     % |X-Xk|<delta
@@ -235,7 +235,7 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    if (del(1) <= 1) && (del(2) <= 1) && (del(3) <= 1)&& (del(4) <= 1)&& (del(5) <= 1)&& (del(6) <= 1)
+    if (del(1) <= 0.5) && (del(2) <= 0.5) && (del(3) <= 0.5)&& (del(4) <= 0.5)&& (del(5) <= 0.5)&& (del(6) <= 0.5)
         break;
     else
         Xk1 = [x'; z'; vx'; vz']; % X_k-2
@@ -390,20 +390,16 @@ for i = 1:Index
     %u3_all(:,i)    = Control_all(2*N+1:3*N,i);
 end
 
-tau1 = linspace(0,1,col_points)' * sigma_opt;
-tau2 = linspace(0,1,col_points2)'* sigma2_opt;
-%tau = linspace(0,1,col_points+col_points2)';
-tau = [tau1;tau2];
+tau = linspace(0,1,col_points+col_points2)';
 % x ~ t
 figure
 for i = 1:Index
-    plot(tau/60, x_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+    plot(tau*1500/60, x_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
     hold on
 end
-plot(tau2/60, x_all(:,end), 'r', 'linewidth', 1.5)
+plot(tau/60, x_all(:,end), 'r', 'linewidth', 1.5)
 xlabel('Time (min)','FontSize',28)
 ylabel('Along-track distance (m)','FontSize',28)
-xlim([0 25])
 set(gca,'Fontsize',28)
 grid on
 
@@ -416,7 +412,6 @@ end
 plot(tau*1500/60, z_all(:,end), 'r', 'linewidth', 1.5)
 xlabel('Time (min)','FontSize',28)
 ylabel('Altitude (m)','FontSize',28)
-xlim([0 25])
 set(gca,'Fontsize',28)
 grid on
 

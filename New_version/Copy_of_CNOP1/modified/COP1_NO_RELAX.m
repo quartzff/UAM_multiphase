@@ -139,7 +139,7 @@ for Index = 1:Max_iter
         Cons = Cons + [ X(2, phase_node) == z0 ];
         Cons = Cons + [ X(1, phase_node +1) == 20000 ];
         Cons = Cons + [ X(2, phase_node +1) == z0 ];
-        Cons = Cons + [ -15 <= X(4,i+1) <= 0 ];
+        Cons = Cons + [ -vmax <= X(4,i+1) <= 0 ];
         Cons = Cons + [ sqrt(X(3,i+1)^2 + X(4,i+1)^2) <= vmax ];
 %         Cons = Cons + [ X(3,i+1)^2 + X(4,i+1)^2 <= vmax^2 ];
         
@@ -236,7 +236,7 @@ for Index = 1:Max_iter
     Conv_sigma2(Index)   = del(6);
     Obj(Index)        = value(Objective); % record objective for each step
     
-    ro = 0.8;
+    ro = 0.9;
     if (del(1) <= ro) && (del(2) <= ro) && (del(3) <= ro)&& (del(4) <= ro)&& (del(5) <= ro)&& (del(6) <= ro)
         break;
     else
@@ -258,17 +258,17 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure
 plot(Conv_I,Conv_x, '-o', 'markersize', 10, 'linewidth', 2)
-xlabel('Iteration number','FontSize',28)
-ylabel('\Delta x (m)','FontSize',28)
-set(gca,'FontSize',28)
+xlabel('Iteration number','FontSize',26)
+ylabel('\Delta x (m)','FontSize',26)
+set(gca,'FontSize',26)
 % axis([1 14 0 6e9])
 grid on
 
 figure
 plot(Conv_I,Conv_z, '-o', 'markersize', 10, 'linewidth', 2)
-xlabel('Iteration number','FontSize',28)
-ylabel('\Delta z (m)','FontSize',28)
-set(gca,'FontSize',28)
+xlabel('Iteration number','FontSize',26)
+ylabel('\Delta z (m)','FontSize',26)
+set(gca,'FontSize',26)
 % axis([1 14 0 6e9])
 grid on
 
@@ -290,9 +290,9 @@ grid on
 
 figure
 plot(Conv_I,Obj*1e9, '-o', 'markersize', 10, 'linewidth', 2)
-xlabel('Iteration number','FontSize',28)
-ylabel('Objective value','FontSize',28)
-set(gca,'FontSize',28)
+xlabel('Iteration number','FontSize',26)
+ylabel('Objective value','FontSize',26)
+set(gca,'FontSize',26)
 grid on
 
 % %------------------------------- States -----------------------------------
@@ -404,10 +404,10 @@ for i = 1:Index
     hold on
 end
 plot(tau/60, x_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',28)
-ylabel('Along-track distance (m)','FontSize',28)
+xlabel('Time (min)','FontSize',24)
+ylabel('Along-track distance (m)','FontSize',24)
 xlim([0 25])
-set(gca,'Fontsize',28)
+set(gca,'Fontsize',24)
 grid on
 
 % z ~ t
@@ -417,11 +417,27 @@ for i = 1:Index
     hold on
 end
 plot(tau/60, z_all(:,end), 'r', 'linewidth', 1.5)
-xlabel('Time (min)','FontSize',28)
-ylabel('Altitude (m)','FontSize',28)
+xlabel('Time (min)','FontSize',24)
+ylabel('Altitude (m)','FontSize',24)
 xlim([0 25])
-set(gca,'Fontsize',28)
+ylim([0 500])
+set(gca,'Fontsize',26)
 grid on
+
+% z ~ t
+figure
+for i = 1:Index
+    plot(x_all(:,i), z_all(:,i), 'Color', Colors(i,:), 'linewidth', 1.5)
+    hold on
+end
+plot(x_all(:,end), z_all(:,end), 'r', 'linewidth', 1.5)
+xlabel('Along track distance (m)','FontSize',24)
+ylabel('Altitude (m)','FontSize',24)
+xlim([0 25])
+ylim([0 500])
+set(gca,'Fontsize',26)
+grid on
+
 
 % vx ~ t
 figure

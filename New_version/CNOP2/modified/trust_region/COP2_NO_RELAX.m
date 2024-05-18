@@ -163,9 +163,10 @@ for Index = 1:Max_iter
     %Cons = Cons + [ Sigma == 733.8 ];
     %---Trust-region constraint
     % |X-Xk|<delta
-    rad = 0.8;
+    rad = 0.5;
+    rad1 = 0.5;
     Xk = [x'; z'; vx'; vz']; % X_k-1
-    delta = [2000*rad*ones(1,N); 500*rad*ones(1,N); 30*rad*ones(1,N); 10*rad*ones(1,N)];
+    delta = [2000*rad*ones(1,N); 500*rad*ones(1,N); 30*rad1*ones(1,N); 30*rad*ones(1,N)];
     Cons = Cons + [ -delta <= X-Xk <= delta ];
     
     
